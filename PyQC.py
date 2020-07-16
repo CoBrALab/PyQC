@@ -19,6 +19,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         super(MainWindow, self).__init__(parent)
         self.setupUi(self)
 
+        self.tableWidget.setColumnWidth(1,35)
 
         self.actionOpen_Directory.triggered.connect(self.openDir)
         self.actionOpen_Files.triggered.connect(self.openFiles)
