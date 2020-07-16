@@ -82,7 +82,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
                 self.tableWidget.setItem(i,0,item)
             self.listlocation = 0
             self.image = QPixmap(self.filelist[0])
-            self.label.setPixmap(self.image.scaled(QSize(759,710), Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            self.label.setPixmap(self.image.scaled(self.label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
             self.tableWidget.scrollToItem(self.tableWidget.item(self.listlocation,0), QAbstractItemView.PositionAtCenter)
             self.tableWidget.selectRow(self.listlocation)
 
@@ -96,7 +96,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
                 self.tableWidget.setItem(i,0,item)
             self.listlocation = 0
             self.image = QPixmap(self.filelist[0])
-            self.label.setPixmap(self.image.scaled(QSize(759,710), Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            self.label.setPixmap(self.image.scaled(self.label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
             self.tableWidget.scrollToItem(self.tableWidget.item(self.listlocation,0), QAbstractItemView.PositionAtCenter)
             self.tableWidget.selectRow(self.listlocation)
 
@@ -108,7 +108,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             self.tableWidget.setItem(i,0,item)
         self.listlocation = 0
         self.image = QPixmap(self.filelist[0])
-        self.label.setPixmap(self.image.scaled(QSize(759,710), Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        self.label.setPixmap(self.image.scaled(self.label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
         self.tableWidget.scrollToItem(self.tableWidget.item(self.listlocation,0), QAbstractItemView.PositionAtCenter)
         self.tableWidget.selectRow(self.listlocation)
 
