@@ -2,12 +2,13 @@
 
 # Form implementation generated from reading ui file 'window1.ui'
 #
-# Created: Tue Dec  1 17:11:54 2015
-#      by: PyQt5 UI code generator 5.2.1
+# Created by: PyQt5 UI code generator 5.12.3
 #
 # WARNING! All changes made in this file will be lost!
 
+
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -34,13 +35,23 @@ class Ui_MainWindow(object):
         self.tableWidget.setSizePolicy(sizePolicy)
         self.tableWidget.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.tableWidget.setBaseSize(QtCore.QSize(0, 0))
+        self.tableWidget.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.tableWidget.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+        self.tableWidget.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.tableWidget.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
         self.tableWidget.setObjectName("tableWidget")
         self.tableWidget.setColumnCount(2)
         self.tableWidget.setRowCount(0)
         item = QtWidgets.QTableWidgetItem()
+        item.setTextAlignment(QtCore.Qt.AlignCenter)
         self.tableWidget.setHorizontalHeaderItem(0, item)
         item = QtWidgets.QTableWidgetItem()
+        item.setTextAlignment(QtCore.Qt.AlignCenter)
         self.tableWidget.setHorizontalHeaderItem(1, item)
+        self.tableWidget.horizontalHeader().setMinimumSectionSize(5)
+        self.tableWidget.horizontalHeader().setStretchLastSection(False)
+        self.tableWidget.verticalHeader().setMinimumSectionSize(5)
+        self.tableWidget.verticalHeader().setStretchLastSection(False)
         self.splitter_2 = QtWidgets.QSplitter(self.splitter_3)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(1)
@@ -59,7 +70,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setAlignment(QtCore.Qt.AlignCenter)
         self.scrollArea.setObjectName("scrollArea")
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 777, 728))
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 779, 762))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -69,6 +80,12 @@ class Ui_MainWindow(object):
         self.gridLayout = QtWidgets.QGridLayout(self.scrollAreaWidgetContents)
         self.gridLayout.setObjectName("gridLayout")
         self.label = QtWidgets.QLabel(self.scrollAreaWidgetContents)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.label.sizePolicy().hasHeightForWidth())
+        self.label.setSizePolicy(sizePolicy)
+        self.label.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.label.setAlignment(QtCore.Qt.AlignCenter)
         self.label.setObjectName("label")
         self.gridLayout.addWidget(self.label, 0, 0, 1, 1)
@@ -76,19 +93,10 @@ class Ui_MainWindow(object):
         self.splitter = QtWidgets.QSplitter(self.splitter_2)
         self.splitter.setOrientation(QtCore.Qt.Horizontal)
         self.splitter.setObjectName("splitter")
-        self.button_1 = QtWidgets.QPushButton(self.splitter)
-        self.button_1.setMaximumSize(QtCore.QSize(16777215, 27))
-        self.button_1.setObjectName("button_1")
-        self.button_05 = QtWidgets.QPushButton(self.splitter)
-        self.button_05.setMaximumSize(QtCore.QSize(16777215, 27))
-        self.button_05.setObjectName("button_05")
-        self.button_0 = QtWidgets.QPushButton(self.splitter)
-        self.button_0.setMaximumSize(QtCore.QSize(16777215, 27))
-        self.button_0.setObjectName("button_0")
         self.gridLayout_2.addWidget(self.splitter_3, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1059, 25))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1059, 20))
         self.menubar.setObjectName("menubar")
         self.menu_File = QtWidgets.QMenu(self.menubar)
         self.menu_File.setObjectName("menu_File")
@@ -118,19 +126,15 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "PyQC"))
         item = self.tableWidget.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "File"))
         item = self.tableWidget.horizontalHeaderItem(1)
         item.setText(_translate("MainWindow", "QC"))
         self.label.setText(_translate("MainWindow", "Load Images for QC"))
-        self.button_1.setText(_translate("MainWindow", "1"))
-        self.button_05.setText(_translate("MainWindow", "0.5"))
-        self.button_0.setText(_translate("MainWindow", "0"))
         self.menu_File.setTitle(_translate("MainWindow", "&File"))
         self.menu_View.setTitle(_translate("MainWindow", "&View"))
         self.action_Save.setText(_translate("MainWindow", "&Save"))
         self.actionSave_As.setText(_translate("MainWindow", "Save &As"))
         self.actionOpen_Files.setText(_translate("MainWindow", "Open &Files"))
         self.actionOpen_Directory.setText(_translate("MainWindow", "Open &Directory"))
-

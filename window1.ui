@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
+ <author>Gabriel A. Devenyi</author>
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
   <property name="geometry">
@@ -11,7 +12,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>PyQC</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_2">
@@ -51,14 +52,44 @@
          <height>0</height>
         </size>
        </property>
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
+       <property name="verticalScrollBarPolicy">
+        <enum>Qt::ScrollBarAlwaysOn</enum>
+       </property>
+       <property name="horizontalScrollBarPolicy">
+        <enum>Qt::ScrollBarAlwaysOff</enum>
+       </property>
+       <property name="sizeAdjustPolicy">
+        <enum>QAbstractScrollArea::AdjustToContents</enum>
+       </property>
+       <attribute name="horizontalHeaderMinimumSectionSize">
+        <number>5</number>
+       </attribute>
+       <attribute name="horizontalHeaderStretchLastSection">
+        <bool>false</bool>
+       </attribute>
+       <attribute name="verticalHeaderMinimumSectionSize">
+        <number>5</number>
+       </attribute>
+       <attribute name="verticalHeaderStretchLastSection">
+        <bool>false</bool>
+       </attribute>
        <column>
         <property name="text">
          <string>File</string>
+        </property>
+        <property name="textAlignment">
+         <set>AlignCenter</set>
         </property>
        </column>
        <column>
         <property name="text">
          <string>QC</string>
+        </property>
+        <property name="textAlignment">
+         <set>AlignCenter</set>
         </property>
        </column>
       </widget>
@@ -90,8 +121,8 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>777</width>
-           <height>728</height>
+           <width>779</width>
+           <height>762</height>
           </rect>
          </property>
          <property name="sizePolicy">
@@ -103,6 +134,15 @@
          <layout class="QGridLayout" name="gridLayout">
           <item row="0" column="0">
            <widget class="QLabel" name="label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="focusPolicy">
+             <enum>Qt::StrongFocus</enum>
+            </property>
             <property name="text">
              <string>Load Images for QC</string>
             </property>
@@ -118,39 +158,6 @@
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
-        <widget class="QPushButton" name="button_1">
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>27</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>1</string>
-         </property>
-        </widget>
-        <widget class="QPushButton" name="button_05">
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>27</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>0.5</string>
-         </property>
-        </widget>
-        <widget class="QPushButton" name="button_0">
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>27</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>0</string>
-         </property>
-        </widget>
        </widget>
       </widget>
      </widget>
@@ -163,7 +170,7 @@
      <x>0</x>
      <y>0</y>
      <width>1059</width>
-     <height>25</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
