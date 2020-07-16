@@ -116,7 +116,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self.listlocation = row
         self.image = QPixmap(self.filelist[self.listlocation])
         self.label.setPixmap(self.image.scaled(self.label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
-        self.tableWidget.scrollToItem(self.tableWidget.item(self.listlocation,0), QAbstractItemView.PositionAtCenter)
+        self.tableWidget.scrollToItem(self.tableWidget.item(self.listlocation,1), QAbstractItemView.PositionAtCenter)
         self.tableWidget.selectRow(self.listlocation)
 
     def undo(self):
