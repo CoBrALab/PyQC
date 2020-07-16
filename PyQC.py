@@ -19,16 +19,6 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         super(MainWindow, self).__init__(parent)
         self.setupUi(self)
 
-        self.button_0.clicked.connect(self.button_0_clicked)
-        self.button_05.clicked.connect(self.button_05_clicked)
-        self.button_1.clicked.connect(self.button_1_clicked)
-
-        self.shortcut_1 = QShortcut(QKeySequence(Qt.Key_1 + Qt.KeypadModifier), self)
-        self.shortcut_2 = QShortcut(QKeySequence(Qt.Key_2 + Qt.KeypadModifier), self)
-        self.shortcut_3 = QShortcut(QKeySequence(Qt.Key_3 + Qt.KeypadModifier), self)
-        self.shortcut_1.activated.connect(self.button_1_clicked)
-        self.shortcut_2.activated.connect(self.button_05_clicked)
-        self.shortcut_3.activated.connect(self.button_0_clicked)
 
         self.actionOpen_Directory.triggered.connect(self.openDir)
         self.actionOpen_Files.triggered.connect(self.openFiles)
@@ -45,28 +35,21 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             self.filelist = sys.argv[1:]
             self.openArgumentFiles()
 
+    def keyPressEvent(self, event):
+      if event.text().isnumeric():
+        self.keypress(event.text())
+      elif event.key() == Qt.Key_Minus:
+        self.undo()
 
-    def button_0_clicked(self):
-        self.tableWidget.setItem(self.listlocation,1, QTableWidgetItem("0"))
-        self.listlocation += 1
-        self.image = QPixmap(self.filelist[self.listlocation])
-        self.label.setPixmap(self.image.scaled(self.label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
-        self.tableWidget.scrollToItem(self.tableWidget.item(self.listlocation,0), QAbstractItemView.PositionAtCenter)
-        self.tableWidget.selectRow(self.listlocation)
-    def button_05_clicked(self):
-        self.tableWidget.setItem(self.listlocation,1, QTableWidgetItem("0.5"))
-        self.listlocation += 1
-        self.image = QPixmap(self.filelist[self.listlocation])
-        self.label.setPixmap(self.image.scaled(self.label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
-        self.tableWidget.scrollToItem(self.tableWidget.item(self.listlocation,0), QAbstractItemView.PositionAtCenter)
-        self.tableWidget.selectRow(self.listlocation)
-    def button_1_clicked(self):
-        self.tableWidget.setItem(self.listlocation,1, QTableWidgetItem("1"))
-        self.listlocation += 1
-        self.image = QPixmap(self.filelist[self.listlocation])
-        self.label.setPixmap(self.image.scaled(self.label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
-        self.tableWidget.scrollToItem(self.tableWidget.item(self.listlocation,0), QAbstractItemView.PositionAtCenter)
-        self.tableWidget.selectRow(self.listlocation)
+    def keypress(self,key):
+        self.tableWidget.setItem(self.listlocation,1,QTableWidgetItem(key))
+        if (self.listlocation + 1) != len(self.filelist):
+          self.listlocation += 1
+          self.image = QPixmap(self.filelist[self.listlocation])
+          self.label.setPixmap(self.image.scaled(self.label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
+          self.tableWidget.scrollToItem(self.tableWidget.item(self.listlocation,0), QAbstractItemView.PositionAtCenter)
+          self.tableWidget.selectRow(self.listlocation)
+
     def scaleImage(self, factor):
         self.label.setPixmap(self.image.scaled(self.label.pixmap().size()*factor, Qt.KeepAspectRatio, Qt.SmoothTransformation))
         self.adjustScrollBar(self.scrollArea.horizontalScrollBar(), factor)
@@ -134,6 +117,15 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self.label.setPixmap(self.image.scaled(self.label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
         self.tableWidget.scrollToItem(self.tableWidget.item(self.listlocation,0), QAbstractItemView.PositionAtCenter)
         self.tableWidget.selectRow(self.listlocation)
+
+    def undo(self):
+        if not ((self.listlocation - 1) < 0):
+          self.listlocation = self.listlocation - 1
+          self.tableWidget.setItem(self.listlocation,1,QTableWidgetItem(""))
+          self.image = QPixmap(self.filelist[self.listlocation])
+          self.label.setPixmap(self.image.scaled(self.label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
+          self.tableWidget.scrollToItem(self.tableWidget.item(self.listlocation,1), QAbstractItemView.PositionAtCenter)
+          self.tableWidget.selectRow(self.listlocation)
 
     def SaveAs(self):
         self.path,_ = QFileDialog.getSaveFileName(
