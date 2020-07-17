@@ -38,11 +38,11 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
 
     def keyPressEvent(self, event):
       if event.text().isnumeric():
-        self.keypress(event.text())
+        self.numpress(event.text())
       elif event.key() == Qt.Key_Minus:
         self.undo()
 
-    def keypress(self,key):
+    def numpress(self,key):
         self.tableWidget.setItem(self.listlocation,1,QTableWidgetItem(key))
         if (self.listlocation + 1) != len(self.filelist):
           self.listlocation += 1
