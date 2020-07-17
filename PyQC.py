@@ -24,6 +24,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self.actionOpen_Directory.triggered.connect(self.openDir)
         self.actionOpen_Files.triggered.connect(self.openFiles)
         self.actionSave_As.triggered.connect(self.SaveAs)
+        self.action_Save.triggered.connect(self.Save)
 
         self.filelist = list()
         self.path = None
