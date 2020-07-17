@@ -40,11 +40,35 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
     def keyPressEvent(self, event):
       if event.text().isnumeric():
         self.numpress(event.text())
-      elif event.key() == Qt.Key_Minus:
+      elif event.key() == Qt.Key_Period:
         self.undo()
+      elif event.key() == Qt.Key_W:
+          self.navup()
+      elif event.key() == Qt.Key_S:
+          self.navdown()
+      elif event.key() == Qt.Key_Plus:
+          self.scaleImage(1.1)
+      elif event.key() == Qt.Key_Minus:
+          self.scaleImage(0.9)
 
     def numpress(self,key):
         self.tableWidget.setItem(self.listlocation,1,QTableWidgetItem(key))
+        if (self.listlocation + 1) != len(self.filelist):
+          self.listlocation += 1
+          self.image = QPixmap(self.filelist[self.listlocation])
+          self.label.setPixmap(self.image.scaled(self.label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
+          self.tableWidget.scrollToItem(self.tableWidget.item(self.listlocation,0), QAbstractItemView.PositionAtCenter)
+          self.tableWidget.selectRow(self.listlocation)
+
+    def navup(self):
+        if not ((self.listlocation - 1) < 0):
+          self.listlocation -= 1
+          self.image = QPixmap(self.filelist[self.listlocation])
+          self.label.setPixmap(self.image.scaled(self.label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
+          self.tableWidget.scrollToItem(self.tableWidget.item(self.listlocation,0), QAbstractItemView.PositionAtCenter)
+          self.tableWidget.selectRow(self.listlocation)
+
+    def navdown(self):
         if (self.listlocation + 1) != len(self.filelist):
           self.listlocation += 1
           self.image = QPixmap(self.filelist[self.listlocation])
