@@ -42,9 +42,9 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self.numpress(event.text())
       elif event.key() == Qt.Key_Period:
         self.undo()
-      elif event.key() == Qt.Key_W:
+      elif event.key() == Qt.Key_W or event.key() == Qt.Key_Slash:
           self.navup()
-      elif event.key() == Qt.Key_S:
+      elif event.key() == Qt.Key_S or event.key() == Qt.Key_Asterisk:
           self.navdown()
       elif event.key() == Qt.Key_Plus:
           self.scaleImage(1.1)
