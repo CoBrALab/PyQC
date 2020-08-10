@@ -1,24 +1,29 @@
-PyQC
------------
+#PyQC
 
-Loading
-- from command line
-- from file selector
-- from open directory
-- prior CSV data
+A tool for reviewing QC images and storing ratings.
 
+Load data via either the command line or the open files
+open directory function.
 
-List of files allows navigation (also shows QC value)
+Use the numeric keys on the keybord to assign that score
+to current image.
 
-View Control
+Use "w" and "s" or "/" and "*" to navigatge up and down the list without
+assigning a rating. Use "." to undo previous rating.
+"+" and "-" control image zoom.
+
+#Dependencies
+
+PyQt5 (python3-pyqt5 in Ubuntu)
+
+#TODO
+
+- loading from prior CSV data
+
+View Control Settings
 - Menu->Fit to page
 - Menu->Full size
-- Zoom with mouse
 
-Saving:
-- Save
-- Save as
-- Saves flat CSV with filename and QC value
-
-#To re-generate GUI
+#Development notes
+To re-generate GUI:
 ``pyuic5 window1.ui -o window1.py``
