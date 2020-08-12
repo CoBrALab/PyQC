@@ -26,8 +26,6 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         super(MainWindow, self).__init__(parent)
         self.setupUi(self)
 
-        self.tableWidget.setColumnWidth(1, 35)
-
         self.actionOpen_Directory.triggered.connect(self.openDir)
         self.actionOpen_Files.triggered.connect(self.openFiles)
         self.actionSave_As.triggered.connect(self.SaveAs)
@@ -38,6 +36,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self.image = None
         self.listlocation = 0
         self.scaleFactor = None
+        self.insert_column = 1
 
         self.tableWidget.cellClicked.connect(self.switchToItem)
         self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
@@ -61,19 +60,24 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             self.scaleImage(0.9)
 
     def numpress(self, key):
-        self.tableWidget.setItem(self.listlocation, 1, QTableWidgetItem(key))
-        if (self.listlocation + 1) != len(self.filelist):
-            self.listlocation += 1
-            self.label.load(self.filelist[self.listlocation])
-            self.scrollArea.setWidgetResizable(True)
-            self.scaleFactor = None
-            self.tableWidget.scrollToItem(
-                self.tableWidget.item(self.listlocation, 0),
-                QAbstractItemView.PositionAtCenter,
-            )
-            self.tableWidget.selectRow(self.listlocation)
+        self.tableWidget.setItem(self.listlocation, self.insert_column, QTableWidgetItem(key))
+        if self.insert_column == 2:
+          if (self.listlocation + 1) != len(self.filelist):
+              self.listlocation += 1
+              self.label.load(self.filelist[self.listlocation])
+              self.scrollArea.setWidgetResizable(True)
+              self.scaleFactor = None
+              self.tableWidget.scrollToItem(
+                  self.tableWidget.item(self.listlocation, 0),
+                  QAbstractItemView.PositionAtCenter,
+              )
+              self.tableWidget.selectRow(self.listlocation)
+              self.insert_column = 1
+        else:
+          self.insert_column = 2
 
     def navup(self):
+        self.insert_column = 1
         if not ((self.listlocation - 1) < 0):
             self.listlocation -= 1
             self.label.load(self.filelist[self.listlocation])
@@ -86,6 +90,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             self.tableWidget.selectRow(self.listlocation)
 
     def navdown(self):
+        self.insert_column = 1
         if (self.listlocation + 1) != len(self.filelist):
             self.listlocation += 1
             self.label.load(self.filelist[self.listlocation])
@@ -173,6 +178,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self.tableWidget.selectRow(self.listlocation)
 
     def switchToItem(self, row, column):
+        self.insert_column = 1
         self.listlocation = row
         self.label.load(self.filelist[self.listlocation])
         self.scrollArea.setWidgetResizable(True)
@@ -184,9 +190,11 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self.tableWidget.selectRow(self.listlocation)
 
     def undo(self):
+        self.insert_column = 1
         if not ((self.listlocation - 1) < 0):
             self.listlocation = self.listlocation - 1
             self.tableWidget.setItem(self.listlocation, 1, QTableWidgetItem(""))
+            self.tableWidget.setItem(self.listlocation, 2, QTableWidgetItem(""))
             self.label.load(self.filelist[self.listlocation])
             self.scrollArea.setWidgetResizable(True)
             self.scaleFactor = None

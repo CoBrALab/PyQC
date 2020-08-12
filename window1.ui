@@ -40,6 +40,12 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="minimumSize">
+        <size>
+         <width>225</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="maximumSize">
         <size>
          <width>16777215</width>
@@ -64,10 +70,19 @@
        <property name="sizeAdjustPolicy">
         <enum>QAbstractScrollArea::AdjustToContents</enum>
        </property>
+       <attribute name="horizontalHeaderCascadingSectionResizes">
+        <bool>true</bool>
+       </attribute>
        <attribute name="horizontalHeaderMinimumSectionSize">
         <number>5</number>
        </attribute>
+       <attribute name="horizontalHeaderDefaultSectionSize">
+        <number>60</number>
+       </attribute>
        <attribute name="horizontalHeaderStretchLastSection">
+        <bool>true</bool>
+       </attribute>
+       <attribute name="verticalHeaderVisible">
         <bool>false</bool>
        </attribute>
        <attribute name="verticalHeaderMinimumSectionSize">
@@ -81,12 +96,20 @@
          <string>File</string>
         </property>
         <property name="textAlignment">
+         <set>AlignLeading|AlignVCenter</set>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>QC_Raw</string>
+        </property>
+        <property name="textAlignment">
          <set>AlignCenter</set>
         </property>
        </column>
        <column>
         <property name="text">
-         <string>QC</string>
+         <string>QC_Pre</string>
         </property>
         <property name="textAlignment">
          <set>AlignCenter</set>
@@ -121,8 +144,8 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>779</width>
-           <height>762</height>
+           <width>810</width>
+           <height>788</height>
           </rect>
          </property>
          <property name="sizePolicy">
@@ -153,11 +176,6 @@
           </item>
          </layout>
         </widget>
-       </widget>
-       <widget class="QSplitter" name="splitter">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
        </widget>
       </widget>
      </widget>
@@ -190,7 +208,6 @@
    <addaction name="menu_File"/>
    <addaction name="menu_View"/>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
   <action name="action_Save">
    <property name="text">
     <string>&amp;Save</string>
