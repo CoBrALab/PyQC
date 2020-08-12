@@ -40,6 +40,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self.scaleFactor = None
 
         self.tableWidget.cellClicked.connect(self.switchToItem)
+        self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
         if len(sys.argv) > 1:
             self.filelist = sys.argv[1:]
