@@ -141,7 +141,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
 
     def openFiles(self):
         self.filelist, _ = QFileDialog.getOpenFileNames(
-            self, "Select Files", "", ("Images (*.gif *.png *.jpg)")
+            self, "Select Files", "", ("Images (*.gif *.png *.jpg *.jpeg *.webp)")
         )
         if self.filelist:
             self.tableWidget.setRowCount(len(self.filelist))
