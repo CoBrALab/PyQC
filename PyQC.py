@@ -97,7 +97,6 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             self.tableWidget.selectRow(self.listlocation)
 
     def scaleImage(self, factor):
-        # self.label.setPixmap(self.image.scaled(self.label.pixmap().size()*factor, Qt.KeepAspectRatio, Qt.SmoothTransformation))
         if not self.scaleFactor:
             self.scaleFactor = (
                 self.label.size().width() / self.label.content.size().width()
