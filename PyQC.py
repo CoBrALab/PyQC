@@ -125,6 +125,8 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             self.filelist = glob.glob(self.directory + "/*.jpg")
             self.filelist.extend(glob.glob(self.directory + "/*.png"))
             self.filelist.extend(glob.glob(self.directory + "/*.gif"))
+            self.filelist.extend(glob.glob(self.directory + "/*.webp"))
+            self.filelist.extend(glob.glob(self.directory + "/*.jpeg"))
             self.tableWidget.setRowCount(len(self.filelist))
             for i in range(len(self.filelist)):
                 item = QTableWidgetItem()
