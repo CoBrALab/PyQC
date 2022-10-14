@@ -210,7 +210,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             with open(self.path, "w", newline="") as f:
                 writer = csv.writer(f)
                 for row in range(self.tableWidget.rowCount()):
-                    rowdata = []
+                    rowdata = [self.filelist[row]]
                     for column in range(self.tableWidget.columnCount()):
                         item = self.tableWidget.item(row, column)
                         if item is not None:
@@ -225,7 +225,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             with open(self.path, "w", newline="") as f:
                 writer = csv.writer(f)
                 for row in range(self.tableWidget.rowCount()):
-                    rowdata = []
+                    rowdata = [self.filelist[row]]
                     for column in range(self.tableWidget.columnCount()):
                         item = self.tableWidget.item(row, column)
                         if item is not None:
