@@ -167,6 +167,30 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
     def openCSV(self):
         self.path, _ = QFileDialog.getOpenFileName(self, "Open File", "", "CSV(*.csv)")
         print("Opening CSV file: {}".format(self.path))
+        if self.path:
+            with open(self.path, "r", newline="") as f:
+                nrows = 0
+                reader = csv.reader(f)
+                for row in reader:
+                    nrows += 1
+            f.close()
+            self.tableWidget.setRowCount(nrows)
+            self.filelist = []
+            with open(self.path, "r", newline="") as f:
+                reader = csv.reader(f)
+                for row, rowdata in enumerate(reader):
+                    self.filelist.append(rowdata[0])
+                    for column in range(3):
+                        item = QTableWidgetItem(rowdata[column+1])
+                        self.tableWidget.setItem(row, column, item)
+            f.close()
+            self.listlocation = 0
+            self.label.load(self.filelist[self.listlocation])
+            self.tableWidget.scrollToItem(
+                self.tableWidget.item(self.listlocation, 0),
+                QAbstractItemView.PositionAtCenter,
+            )
+            self.tableWidget.selectRow(self.listlocation)
 
     def openArgumentFiles(self):
         self.tableWidget.setRowCount(len(self.filelist))
