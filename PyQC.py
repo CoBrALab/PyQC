@@ -176,6 +176,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             f.close()
             self.tableWidget.setRowCount(nrows)
             self.filelist = []
+            self.listlocation = nrows-1
             with open(self.path, "r", newline="") as f:
                 reader = csv.reader(f)
                 for row, rowdata in enumerate(reader):
@@ -183,8 +184,10 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
                     for column in range(3):
                         item = QTableWidgetItem(rowdata[column+1])
                         self.tableWidget.setItem(row, column, item)
+                    # Start at first row with no QC rating
+                    if ((rowdata[2]=="") or (rowdata[3]=="")) and row < self.listlocation:
+                        self.listlocation = row
             f.close()
-            self.listlocation = 0
             self.label.load(self.filelist[self.listlocation])
             self.tableWidget.scrollToItem(
                 self.tableWidget.item(self.listlocation, 0),
