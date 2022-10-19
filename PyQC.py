@@ -28,6 +28,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
 
         self.actionOpen_Directory.triggered.connect(self.openDir)
         self.actionOpen_Files.triggered.connect(self.openFiles)
+        self.actionOpen_CSV.triggered.connect(self.openCSV)
         self.actionSave_As.triggered.connect(self.SaveAs)
         self.action_Save.triggered.connect(self.Save)
 
@@ -163,6 +164,37 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             )
             self.tableWidget.selectRow(self.listlocation)
 
+    def openCSV(self):
+        self.path, _ = QFileDialog.getOpenFileName(self, "Open File", "", "CSV(*.csv)")
+        print("Opening CSV file: {}".format(self.path))
+        if self.path:
+            with open(self.path, "r", newline="") as f:
+                nrows = 0
+                reader = csv.reader(f)
+                for row in reader:
+                    nrows += 1
+            f.close()
+            self.tableWidget.setRowCount(nrows)
+            self.filelist = []
+            self.listlocation = nrows-1
+            with open(self.path, "r", newline="") as f:
+                reader = csv.reader(f)
+                for row, rowdata in enumerate(reader):
+                    self.filelist.append(rowdata[0])
+                    for column in range(3):
+                        item = QTableWidgetItem(rowdata[column+1])
+                        self.tableWidget.setItem(row, column, item)
+                    # Start at first row with no QC rating
+                    if ((rowdata[2]=="") or (rowdata[3]=="")) and row < self.listlocation:
+                        self.listlocation = row
+            f.close()
+            self.label.load(self.filelist[self.listlocation])
+            self.tableWidget.scrollToItem(
+                self.tableWidget.item(self.listlocation, 0),
+                QAbstractItemView.PositionAtCenter,
+            )
+            self.tableWidget.selectRow(self.listlocation)
+
     def openArgumentFiles(self):
         self.tableWidget.setRowCount(len(self.filelist))
         for i in range(len(self.filelist)):
@@ -210,7 +242,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             with open(self.path, "w", newline="") as f:
                 writer = csv.writer(f)
                 for row in range(self.tableWidget.rowCount()):
-                    rowdata = []
+                    rowdata = [self.filelist[row]]
                     for column in range(self.tableWidget.columnCount()):
                         item = self.tableWidget.item(row, column)
                         if item is not None:
@@ -225,7 +257,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             with open(self.path, "w", newline="") as f:
                 writer = csv.writer(f)
                 for row in range(self.tableWidget.rowCount()):
-                    rowdata = []
+                    rowdata = [self.filelist[row]]
                     for column in range(self.tableWidget.columnCount()):
                         item = self.tableWidget.item(row, column)
                         if item is not None:
