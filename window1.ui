@@ -144,8 +144,8 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>810</width>
-           <height>788</height>
+           <width>800</width>
+           <height>773</height>
           </rect>
          </property>
          <property name="sizePolicy">
@@ -188,7 +188,7 @@
      <x>0</x>
      <y>0</y>
      <width>1059</width>
-     <height>20</height>
+     <height>27</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
@@ -199,6 +199,7 @@
     <addaction name="actionSave_As"/>
     <addaction name="actionOpen_Files"/>
     <addaction name="actionOpen_Directory"/>
+    <addaction name="actionOpen_CSV"/>
    </widget>
    <widget class="QMenu" name="menu_View">
     <property name="title">
@@ -226,6 +227,11 @@
   <action name="actionOpen_Directory">
    <property name="text">
     <string>Open &amp;Directory</string>
+   </property>
+  </action>
+  <action name="actionOpen_CSV">
+   <property name="text">
+    <string>Open CSV</string>
    </property>
   </action>
  </widget>

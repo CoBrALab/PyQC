@@ -28,6 +28,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
 
         self.actionOpen_Directory.triggered.connect(self.openDir)
         self.actionOpen_Files.triggered.connect(self.openFiles)
+        self.actionOpen_CSV.triggered.connect(self.openCSV)
         self.actionSave_As.triggered.connect(self.SaveAs)
         self.action_Save.triggered.connect(self.Save)
 
@@ -162,6 +163,10 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
                 QAbstractItemView.PositionAtCenter,
             )
             self.tableWidget.selectRow(self.listlocation)
+
+    def openCSV(self):
+        self.path, _ = QFileDialog.getOpenFileName(self, "Open File", "", "CSV(*.csv)")
+        print("Opening CSV file: {}".format(self.path))
 
     def openArgumentFiles(self):
         self.tableWidget.setRowCount(len(self.filelist))

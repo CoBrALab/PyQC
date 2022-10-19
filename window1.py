@@ -2,13 +2,11 @@
 
 # Form implementation generated from reading ui file 'window1.ui'
 #
-# Created by: PyQt5 UI code generator 5.12.3
+# Created by: PyQt5 UI code generator 5.9.2
 #
 # WARNING! All changes made in this file will be lost!
 
-
 from PyQt5 import QtCore, QtGui, QtWidgets
-from image_widget import *
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -77,7 +75,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setAlignment(QtCore.Qt.AlignCenter)
         self.scrollArea.setObjectName("scrollArea")
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 810, 788))
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 800, 773))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -86,7 +84,7 @@ class Ui_MainWindow(object):
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
         self.gridLayout = QtWidgets.QGridLayout(self.scrollAreaWidgetContents)
         self.gridLayout.setObjectName("gridLayout")
-        self.label = SaneDefaultsImageLabel()
+        self.label = QtWidgets.QLabel(self.scrollAreaWidgetContents)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -96,11 +94,11 @@ class Ui_MainWindow(object):
         self.label.setAlignment(QtCore.Qt.AlignCenter)
         self.label.setObjectName("label")
         self.gridLayout.addWidget(self.label, 0, 0, 1, 1)
-        self.scrollArea.setWidget(self.label)
+        self.scrollArea.setWidget(self.scrollAreaWidgetContents)
         self.gridLayout_2.addWidget(self.splitter_3, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1059, 20))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1059, 27))
         self.menubar.setObjectName("menubar")
         self.menu_File = QtWidgets.QMenu(self.menubar)
         self.menu_File.setObjectName("menu_File")
@@ -115,10 +113,13 @@ class Ui_MainWindow(object):
         self.actionOpen_Files.setObjectName("actionOpen_Files")
         self.actionOpen_Directory = QtWidgets.QAction(MainWindow)
         self.actionOpen_Directory.setObjectName("actionOpen_Directory")
+        self.actionOpen_CSV = QtWidgets.QAction(MainWindow)
+        self.actionOpen_CSV.setObjectName("actionOpen_CSV")
         self.menu_File.addAction(self.action_Save)
         self.menu_File.addAction(self.actionSave_As)
         self.menu_File.addAction(self.actionOpen_Files)
         self.menu_File.addAction(self.actionOpen_Directory)
+        self.menu_File.addAction(self.actionOpen_CSV)
         self.menubar.addAction(self.menu_File.menuAction())
         self.menubar.addAction(self.menu_View.menuAction())
 
@@ -141,3 +142,5 @@ class Ui_MainWindow(object):
         self.actionSave_As.setText(_translate("MainWindow", "Save &As"))
         self.actionOpen_Files.setText(_translate("MainWindow", "Open &Files"))
         self.actionOpen_Directory.setText(_translate("MainWindow", "Open &Directory"))
+        self.actionOpen_CSV.setText(_translate("MainWindow", "Open CSV"))
+
