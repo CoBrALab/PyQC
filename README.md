@@ -17,13 +17,17 @@ uv sync
 ## Running
 
 ```bash
-uv run pyqc
-```
+# Show help
+uv run pyqc --help
 
-Or pass image files as arguments:
+# Review specific images
+uv run pyqc image1.jpg image2.png
 
-```bash
-uv run pyqc image1.jpg image2.png ...
+# Review all images in a directory
+uv run pyqc --directory /path/to/images
+
+# Load from CSV (resumes from first unrated image)
+uv run pyqc --csv ratings.csv
 ```
 
 ## Usage
@@ -38,9 +42,23 @@ Use `w` and `s` or `/` and `*` to navigatge up and down the list without
 assigning a rating. Use `.` to undo previous rating.
 `+` and `-` control image zoom.
 
-## TODO
+## Usage
 
-- loading from prior CSV data
+Load data via the command line or use the GUI menu options:
+- **Open Directory**: Load all images from a folder
+- **Open Files**: Select specific image files
+- **Open CSV**: Load a previous CSV file and resume reviewing
+
+### Keyboard Shortcuts
+
+| Key(s) | Action |
+|--------|--------|
+| 0-9 | Assign rating (alternates between QC_Raw and QC_Pre) |
+| W or / | Navigate up without rating |
+| S or * | Navigate down without rating |
+| . | Undo - go back and clear previous ratings |
+| +/- | Zoom in/out |
+| Mouse wheel | Zoom in/out |
 
 View Control Settings
 - Menu->Fit to page

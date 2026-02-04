@@ -13,6 +13,8 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 
+import argparse
+import signal
 import sys
 import glob
 import csv
@@ -22,7 +24,7 @@ import window1
 
 
 class MainWindow(QMainWindow, window1.Ui_MainWindow):
-    def __init__(self, parent=None):
+    def __init__(self, files=None, parent=None):
         super(MainWindow, self).__init__(parent)
         self.setupUi(self)
 
@@ -42,8 +44,8 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self.tableWidget.cellClicked.connect(self.switchToItem)
         self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
-        if len(sys.argv) > 1:
-            self.filelist = sys.argv[1:]
+        if files:
+            self.filelist = files
             self.openArgumentFiles()
 
     def keyPressEvent(self, event):
@@ -128,23 +130,27 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
     def openDir(self):
         self.directory = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
         if self.directory:
-            self.filelist = glob.glob(self.directory + "/*.jpg")
-            self.filelist.extend(glob.glob(self.directory + "/*.png"))
-            self.filelist.extend(glob.glob(self.directory + "/*.gif"))
-            self.filelist.extend(glob.glob(self.directory + "/*.webp"))
-            self.filelist.extend(glob.glob(self.directory + "/*.jpeg"))
-            self.tableWidget.setRowCount(len(self.filelist))
-            for i in range(len(self.filelist)):
-                item = QTableWidgetItem()
-                item.setText(os.path.splitext(os.path.basename(self.filelist[i]))[0])
-                self.tableWidget.setItem(i, 0, item)
-            self.listlocation = 0
-            self.label.load(self.filelist[self.listlocation])
-            self.tableWidget.scrollToItem(
-                self.tableWidget.item(self.listlocation, 0),
-                QAbstractItemView.PositionAtCenter,
-            )
-            self.tableWidget.selectRow(self.listlocation)
+            self.loadDirectory(self.directory)
+
+    def loadDirectory(self, directory):
+        """Load images from a directory."""
+        self.filelist = glob.glob(directory + "/*.jpg")
+        self.filelist.extend(glob.glob(directory + "/*.png"))
+        self.filelist.extend(glob.glob(directory + "/*.gif"))
+        self.filelist.extend(glob.glob(directory + "/*.webp"))
+        self.filelist.extend(glob.glob(directory + "/*.jpeg"))
+        self.tableWidget.setRowCount(len(self.filelist))
+        for i in range(len(self.filelist)):
+            item = QTableWidgetItem()
+            item.setText(os.path.splitext(os.path.basename(self.filelist[i]))[0])
+            self.tableWidget.setItem(i, 0, item)
+        self.listlocation = 0
+        self.label.load(self.filelist[self.listlocation])
+        self.tableWidget.scrollToItem(
+            self.tableWidget.item(self.listlocation, 0),
+            QAbstractItemView.PositionAtCenter,
+        )
+        self.tableWidget.selectRow(self.listlocation)
 
     def openFiles(self):
         self.filelist, _ = QFileDialog.getOpenFileNames(
@@ -166,34 +172,39 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
 
     def openCSV(self):
         self.path, _ = QFileDialog.getOpenFileName(self, "Open File", "", "CSV(*.csv)")
-        print("Opening CSV file: {}".format(self.path))
         if self.path:
-            with open(self.path, "r", newline="") as f:
-                nrows = 0
-                reader = csv.reader(f)
-                for row in reader:
-                    nrows += 1
-            f.close()
-            self.tableWidget.setRowCount(nrows)
-            self.filelist = []
-            self.listlocation = nrows-1
-            with open(self.path, "r", newline="") as f:
-                reader = csv.reader(f)
-                for row, rowdata in enumerate(reader):
-                    self.filelist.append(rowdata[0])
-                    for column in range(3):
-                        item = QTableWidgetItem(rowdata[column+1])
-                        self.tableWidget.setItem(row, column, item)
-                    # Start at first row with no QC rating
-                    if ((rowdata[2]=="") or (rowdata[3]=="")) and row < self.listlocation:
-                        self.listlocation = row
-            f.close()
-            self.label.load(self.filelist[self.listlocation])
-            self.tableWidget.scrollToItem(
-                self.tableWidget.item(self.listlocation, 0),
-                QAbstractItemView.PositionAtCenter,
-            )
-            self.tableWidget.selectRow(self.listlocation)
+            self.loadCSV(self.path)
+
+    def loadCSV(self, path):
+        """Load images and ratings from a CSV file."""
+        print("Opening CSV file: {}".format(path))
+        self.path = path
+        with open(path, "r", newline="") as f:
+            nrows = 0
+            reader = csv.reader(f)
+            for row in reader:
+                nrows += 1
+        f.close()
+        self.tableWidget.setRowCount(nrows)
+        self.filelist = []
+        self.listlocation = nrows-1
+        with open(path, "r", newline="") as f:
+            reader = csv.reader(f)
+            for row, rowdata in enumerate(reader):
+                self.filelist.append(rowdata[0])
+                for column in range(3):
+                    item = QTableWidgetItem(rowdata[column+1])
+                    self.tableWidget.setItem(row, column, item)
+                # Start at first row with no QC rating
+                if ((rowdata[2]=="") or (rowdata[3]=="")) and row < self.listlocation:
+                    self.listlocation = row
+        f.close()
+        self.label.load(self.filelist[self.listlocation])
+        self.tableWidget.scrollToItem(
+            self.tableWidget.item(self.listlocation, 0),
+            QAbstractItemView.PositionAtCenter,
+        )
+        self.tableWidget.selectRow(self.listlocation)
 
     def openArgumentFiles(self):
         self.tableWidget.setRowCount(len(self.filelist))
@@ -270,8 +281,70 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
 
 
 def main():
+    parser = argparse.ArgumentParser(
+        description="PyQC - A tool for reviewing QC images and storing ratings",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Keyboard Shortcuts:
+  0-9    Assign rating to current image (alternates between QC_Raw and QC_Pre)
+  W / /  Navigate up without rating
+  S / *  Navigate down without rating
+  .      Undo - go back and clear previous image's ratings
+  +/-    Zoom in/out
+
+Examples:
+  pyqc image1.jpg image2.png
+  pyqc --directory /path/to/images
+  pyqc --csv ratings.csv
+        """,
+    )
+    parser.add_argument(
+        "files",
+        nargs="*",
+        help="Image files to review (supports: jpg, png, gif, webp, jpeg)",
+    )
+    parser.add_argument(
+        "-d",
+        "--directory",
+        help="Directory containing images to review",
+    )
+    parser.add_argument(
+        "-c",
+        "--csv",
+        help="CSV file to load (resumes from first unrated image)",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version="PyQC 0.1.0",
+    )
+
+    args = parser.parse_args()
+
     app = QApplication(sys.argv)
+
+    # Handle Ctrl-C gracefully
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+    # Handle conflicting arguments
+    if args.directory and args.csv:
+        parser.error("Cannot specify both --directory and --csv")
+    if args.directory and args.files:
+        parser.error("Cannot specify both --directory and file arguments")
+    if args.csv and args.files:
+        parser.error("Cannot specify both --csv and file arguments")
+
     form = MainWindow()
+
+    # Load files based on arguments
+    if args.files:
+        form.filelist = args.files
+        form.openArgumentFiles()
+    elif args.directory:
+        form.loadDirectory(args.directory)
+    elif args.csv:
+        form.loadCSV(args.csv)
+
     form.show()
     sys.exit(app.exec_())
 
