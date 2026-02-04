@@ -2,6 +2,32 @@
 
 A tool for reviewing QC images and storing ratings.
 
+## Installation
+
+This project uses [uv](https://github.com/astral-sh/uv) for Python package management.
+
+```bash
+# Install uv if you haven't already
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install dependencies
+uv sync
+```
+
+## Running
+
+```bash
+uv run pyqc
+```
+
+Or pass image files as arguments:
+
+```bash
+uv run pyqc image1.jpg image2.png ...
+```
+
+## Usage
+
 Load data via either the command line or the open files
 open directory function.
 
@@ -11,10 +37,6 @@ to current image.
 Use `w` and `s` or `/` and `*` to navigatge up and down the list without
 assigning a rating. Use `.` to undo previous rating.
 `+` and `-` control image zoom.
-
-## Dependencies
-
-PyQt5 (python3-pyqt5 in Ubuntu)
 
 ## TODO
 

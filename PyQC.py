@@ -269,8 +269,12 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             self.SaveAs()
 
 
-if __name__ == "__main__":
+def main():
     app = QApplication(sys.argv)
     form = MainWindow()
     form.show()
     sys.exit(app.exec_())
+
+
+if __name__ == "__main__":
+    main()
