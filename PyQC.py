@@ -65,19 +65,19 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
     def numpress(self, key):
         self.tableWidget.setItem(self.listlocation, self.insert_column, QTableWidgetItem(key))
         if self.insert_column == 2:
-          if (self.listlocation + 1) != len(self.filelist):
-              self.listlocation += 1
-              self.label.load(self.filelist[self.listlocation])
-              self.scrollArea.setWidgetResizable(True)
-              self.scaleFactor = None
-              self.tableWidget.scrollToItem(
-                  self.tableWidget.item(self.listlocation, 0),
-                  QAbstractItemView.PositionAtCenter,
-              )
-              self.tableWidget.selectRow(self.listlocation)
-              self.insert_column = 1
+            self.insert_column = 1
+            if (self.listlocation + 1) != len(self.filelist):
+                self.listlocation += 1
+                self.label.load(self.filelist[self.listlocation])
+                self.scrollArea.setWidgetResizable(True)
+                self.scaleFactor = None
+                self.tableWidget.scrollToItem(
+                    self.tableWidget.item(self.listlocation, 0),
+                    QAbstractItemView.PositionAtCenter,
+                )
+                self.tableWidget.selectRow(self.listlocation)
         else:
-          self.insert_column = 2
+            self.insert_column = 2
 
     def navup(self):
         self.insert_column = 1
@@ -106,6 +106,9 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             self.tableWidget.selectRow(self.listlocation)
 
     def scaleImage(self, factor):
+        if not self.label.content or self.label.content.size().width() == 0:
+            return  # Protect against empty content and ZeroDivisionError
+            
         if not self.scaleFactor:
             self.scaleFactor = (
                 self.label.size().width() / self.label.content.size().width()
@@ -139,6 +142,11 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self.filelist.extend(glob.glob(directory + "/*.gif"))
         self.filelist.extend(glob.glob(directory + "/*.webp"))
         self.filelist.extend(glob.glob(directory + "/*.jpeg"))
+
+        if not self.filelist:
+            print("Warning: No image files found.")
+            return
+
         self.tableWidget.setRowCount(len(self.filelist))
         for i in range(len(self.filelist)):
             item = QTableWidgetItem()
@@ -156,19 +164,21 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self.filelist, _ = QFileDialog.getOpenFileNames(
             self, "Select Files", "", ("Images (*.gif *.png *.jpg *.jpeg *.webp)")
         )
-        if self.filelist:
-            self.tableWidget.setRowCount(len(self.filelist))
-            for i in range(len(self.filelist)):
-                item = QTableWidgetItem()
-                item.setText(os.path.splitext(os.path.basename(self.filelist[i]))[0])
-                self.tableWidget.setItem(i, 0, item)
-            self.listlocation = 0
-            self.label.load(self.filelist[self.listlocation])
-            self.tableWidget.scrollToItem(
-                self.tableWidget.item(self.listlocation, 0),
-                QAbstractItemView.PositionAtCenter,
-            )
-            self.tableWidget.selectRow(self.listlocation)
+        if not self.filelist:
+            return
+            
+        self.tableWidget.setRowCount(len(self.filelist))
+        for i in range(len(self.filelist)):
+            item = QTableWidgetItem()
+            item.setText(os.path.splitext(os.path.basename(self.filelist[i]))[0])
+            self.tableWidget.setItem(i, 0, item)
+        self.listlocation = 0
+        self.label.load(self.filelist[self.listlocation])
+        self.tableWidget.scrollToItem(
+            self.tableWidget.item(self.listlocation, 0),
+            QAbstractItemView.PositionAtCenter,
+        )
+        self.tableWidget.selectRow(self.listlocation)
 
     def openCSV(self):
         self.path, _ = QFileDialog.getOpenFileName(self, "Open File", "", "CSV(*.csv)")
@@ -184,21 +194,31 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             reader = csv.reader(f)
             for row in reader:
                 nrows += 1
-        f.close()
+
         self.tableWidget.setRowCount(nrows)
         self.filelist = []
+        
+        if nrows == 0:
+            print("Warning: CSV file is empty.")
+            return
+            
         self.listlocation = nrows-1
         with open(path, "r", newline="") as f:
             reader = csv.reader(f)
             for row, rowdata in enumerate(reader):
+                if not rowdata:
+                    continue
                 self.filelist.append(rowdata[0])
                 for column in range(3):
-                    item = QTableWidgetItem(rowdata[column+1])
+                    val = rowdata[column+1] if len(rowdata) > column + 1 else ""
+                    item = QTableWidgetItem(val)
                     self.tableWidget.setItem(row, column, item)
                 # Start at first row with no QC rating
-                if ((rowdata[2]=="") or (rowdata[3]=="")) and row < self.listlocation:
+                if len(rowdata) > 3 and ((rowdata[2]=="") or (rowdata[3]=="")) and row < self.listlocation:
                     self.listlocation = row
-        f.close()
+                elif len(rowdata) <= 3 and row < self.listlocation:
+                    self.listlocation = row
+
         self.label.load(self.filelist[self.listlocation])
         self.tableWidget.scrollToItem(
             self.tableWidget.item(self.listlocation, 0),
@@ -207,6 +227,10 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self.tableWidget.selectRow(self.listlocation)
 
     def openArgumentFiles(self):
+        if not self.filelist:
+            print("Warning: No image files provided.")
+            return
+            
         self.tableWidget.setRowCount(len(self.filelist))
         for i in range(len(self.filelist)):
             item = QTableWidgetItem()
@@ -234,18 +258,18 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
 
     def undo(self):
         self.insert_column = 1
-        if not ((self.listlocation - 1) < 0):
-            self.listlocation = self.listlocation - 1
-            self.tableWidget.setItem(self.listlocation, 1, QTableWidgetItem(""))
-            self.tableWidget.setItem(self.listlocation, 2, QTableWidgetItem(""))
-            self.label.load(self.filelist[self.listlocation])
-            self.scrollArea.setWidgetResizable(True)
-            self.scaleFactor = None
-            self.tableWidget.scrollToItem(
-                self.tableWidget.item(self.listlocation, 1),
-                QAbstractItemView.PositionAtCenter,
-            )
-            self.tableWidget.selectRow(self.listlocation)
+        if self.listlocation > 0:
+            self.listlocation -= 1
+        self.tableWidget.setItem(self.listlocation, 1, QTableWidgetItem(""))
+        self.tableWidget.setItem(self.listlocation, 2, QTableWidgetItem(""))
+        self.label.load(self.filelist[self.listlocation])
+        self.scrollArea.setWidgetResizable(True)
+        self.scaleFactor = None
+        self.tableWidget.scrollToItem(
+            self.tableWidget.item(self.listlocation, 1),
+            QAbstractItemView.PositionAtCenter,
+        )
+        self.tableWidget.selectRow(self.listlocation)
 
     def SaveAs(self):
         self.path, _ = QFileDialog.getSaveFileName(self, "Save File", "", "CSV(*.csv)")
