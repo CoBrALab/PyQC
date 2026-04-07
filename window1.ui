@@ -18,39 +18,11 @@
    <layout class="QGridLayout" name="gridLayout_2">
     <item row="0" column="0">
      <widget class="QSplitter" name="splitter_3">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="baseSize">
-       <size>
-        <width>0</width>
-        <height>0</height>
-       </size>
-      </property>
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-      <widget class="QTableWidget" name="tableWidget">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>225</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>16777215</width>
-         <height>16777215</height>
-        </size>
        </property>
        <property name="baseSize">
         <size>
@@ -58,18 +30,58 @@
          <height>0</height>
         </size>
        </property>
-       <property name="focusPolicy">
-        <enum>Qt::NoFocus</enum>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
        </property>
-       <property name="verticalScrollBarPolicy">
-        <enum>Qt::ScrollBarAlwaysOn</enum>
+       <property name="handleWidth">
+        <number>10</number>
        </property>
-       <property name="horizontalScrollBarPolicy">
-        <enum>Qt::ScrollBarAlwaysOff</enum>
-       </property>
-       <property name="sizeAdjustPolicy">
-        <enum>QAbstractScrollArea::AdjustToContents</enum>
-       </property>
+       <widget class="QTableWidget" name="tableWidget">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>225</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>500</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="baseSize">
+         <size>
+          <width>0</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="focusPolicy">
+         <enum>Qt::NoFocus</enum>
+        </property>
+        <property name="verticalScrollBarPolicy">
+         <enum>Qt::ScrollBarAlwaysOn</enum>
+        </property>
+        <property name="horizontalScrollBarPolicy">
+         <enum>Qt::ScrollBarAlwaysOff</enum>
+        </property>
+        <property name="sizeAdjustPolicy">
+         <enum>QAbstractScrollArea::AdjustToContents</enum>
+        </property>
+        <property name="contextMenuPolicy">
+         <enum>Qt::CustomContextMenu</enum>
+        </property>
        <attribute name="horizontalHeaderCascadingSectionResizes">
         <bool>true</bool>
        </attribute>
@@ -115,8 +127,8 @@
          <set>AlignCenter</set>
         </property>
        </column>
-      </widget>
-      <widget class="QSplitter" name="splitter_2">
+     </widget>
+       <widget class="QSplitter" name="splitter_2">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
          <horstretch>1</horstretch>
@@ -191,23 +203,39 @@
      <height>27</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menu_File">
+<widget class="QMenu" name="menu_File">
+     <property name="title">
+      <string>&amp;File</string>
+     </property>
+     <addaction name="action_Save"/>
+     <addaction name="actionSave_As"/>
+     <addaction name="actionOpen_Files"/>
+     <addaction name="actionOpen_Directory"/>
+     <addaction name="actionOpen_CSV"/>
+     <addaction name="separator"/>
+     <addaction name="action_Quit"/>
+    </widget>
+<widget class="QMenu" name="menu_View">
+     <property name="title">
+      <string>&amp;View</string>
+     </property>
+     <addaction name="action_Zoom_1_1"/>
+     <addaction name="action_Zoom_Fit"/>
+     <addaction name="separator"/>
+     <addaction name="action_Zoom_In"/>
+     <addaction name="action_Zoom_Out"/>
+    </widget>
+   <widget class="QMenu" name="menu_Columns">
     <property name="title">
-     <string>&amp;File</string>
+     <string>&amp;Columns</string>
     </property>
-    <addaction name="action_Save"/>
-    <addaction name="actionSave_As"/>
-    <addaction name="actionOpen_Files"/>
-    <addaction name="actionOpen_Directory"/>
-    <addaction name="actionOpen_CSV"/>
-   </widget>
-   <widget class="QMenu" name="menu_View">
-    <property name="title">
-     <string>&amp;View</string>
-    </property>
+    <addaction name="actionAdd_Column"/>
+    <addaction name="actionRename_Column"/>
+    <addaction name="actionRemove_Column"/>
    </widget>
    <addaction name="menu_File"/>
    <addaction name="menu_View"/>
+   <addaction name="menu_Columns"/>
   </widget>
   <action name="action_Save">
    <property name="text">
@@ -234,7 +262,59 @@
     <string>Open CSV</string>
    </property>
   </action>
- </widget>
+  <action name="actionAdd_Column">
+   <property name="text">
+    <string>Add Column</string>
+   </property>
+  </action>
+  <action name="actionRename_Column">
+   <property name="text">
+    <string>Rename Column</string>
+   </property>
+  </action>
+<action name="actionRemove_Column">
+    <property name="text">
+     <string>Remove Column</string>
+    </property>
+   </action>
+<action name="action_Quit">
+     <property name="text">
+      <string>&amp;Quit</string>
+     </property>
+    </action>
+    <action name="action_Zoom_1_1">
+     <property name="text">
+      <string>Zoom 1:1</string>
+     </property>
+     <property name="shortcut">
+      <string>Ctrl+1</string>
+     </property>
+    </action>
+    <action name="action_Zoom_Fit">
+     <property name="text">
+      <string>Zoom to Fit</string>
+     </property>
+     <property name="shortcut">
+      <string>Ctrl+0</string>
+     </property>
+    </action>
+    <action name="action_Zoom_In">
+     <property name="text">
+      <string>Zoom In</string>
+     </property>
+     <property name="shortcut">
+      <string>Ctrl++</string>
+     </property>
+    </action>
+    <action name="action_Zoom_Out">
+     <property name="text">
+      <string>Zoom Out</string>
+     </property>
+     <property name="shortcut">
+      <string>Ctrl+-</string>
+     </property>
+    </action>
+   </widget>
  <resources/>
  <connections/>
 </ui>

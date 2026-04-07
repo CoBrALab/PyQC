@@ -8,10 +8,43 @@ from __future__ import (
     unicode_literals,
 )
 
-from PyQt5.QtCore import QSize, Qt
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
+from PyQt5.QtCore import QSize, Qt, QEvent
+from PyQt5.QtGui import (
+    QFont,
+    QPalette,
+    QPixmap,
+    QImage,
+    QMovie,
+    QKeyEvent,
+    QWheelEvent,
+    QResizeEvent,
+)
+from PyQt5.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QGridLayout,
+    QLabel,
+    QPushButton,
+    QLineEdit,
+    QTextEdit,
+    QTableWidget,
+    QTableWidgetItem,
+    QHeaderView,
+    QScrollArea,
+    QSplitter,
+    QFileDialog,
+    QInputDialog,
+    QMessageBox,
+    QMenu,
+    QMenuBar,
+    QStatusBar,
+    QAbstractItemView,
+    QDialog,
+    QAction,
+)
 
 import argparse
 import signal
@@ -33,6 +66,14 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self.actionOpen_CSV.triggered.connect(self.openCSV)
         self.actionSave_As.triggered.connect(self.SaveAs)
         self.action_Save.triggered.connect(self.Save)
+        self.actionAdd_Column.triggered.connect(self.addColumn)
+        self.actionRename_Column.triggered.connect(self.renameColumn)
+        self.actionRemove_Column.triggered.connect(self.removeColumn)
+        self.action_Quit.triggered.connect(QApplication.quit)
+        self.action_Zoom_1_1.triggered.connect(self.zoomTo1_1)
+        self.action_Zoom_Fit.triggered.connect(self.zoomToFit)
+        self.action_Zoom_In.triggered.connect(self.zoomIn)
+        self.action_Zoom_Out.triggered.connect(self.zoomOut)
 
         self.filelist = list()
         self.path = None
@@ -40,32 +81,55 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self.listlocation = 0
         self.scaleFactor = None
         self.insert_column = 1
+        self.column_names = ["File", "QC_Raw", "QC_Pre"]
 
         self.tableWidget.cellClicked.connect(self.switchToItem)
         self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.tableWidget.customContextMenuRequested.connect(self.showColumnContextMenu)
+        self.tableWidget.horizontalHeader().customContextMenuRequested.connect(
+            self.showColumnContextMenu
+        )
+        self.tableWidget.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
+
+        self.splitter_3.setSizes([200, 600])
+        self.tableWidget.resizeColumnsToContents()
 
         if files:
             self.filelist = files
             self.openArgumentFiles()
 
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, a0: QKeyEvent | None) -> None:
+        if a0 is None:
+            return
+        event = a0
         if event.text().isnumeric():
             self.numpress(event.text())
-        elif event.key() == Qt.Key_Period:
+        elif event.key() == Qt.Key_Period:  # type: ignore[attr-defined]
             self.undo()
-        elif event.key() == Qt.Key_W or event.key() == Qt.Key_Slash:
+        elif event.key() == Qt.Key_W or event.key() == Qt.Key_Slash:  # type: ignore[attr-defined]
             self.navup()
-        elif event.key() == Qt.Key_S or event.key() == Qt.Key_Asterisk:
+        elif event.key() == Qt.Key_S or event.key() == Qt.Key_Asterisk:  # type: ignore[attr-defined]
             self.navdown()
-        elif event.key() == Qt.Key_Plus:
+        elif event.key() == Qt.Key_Plus:  # type: ignore[attr-defined]
             self.scaleImage(1.1)
-        elif event.key() == Qt.Key_Minus:
+        elif event.key() == Qt.Key_Minus:  # type: ignore[attr-defined]
             self.scaleImage(0.9)
 
     def numpress(self, key):
-        self.tableWidget.setItem(self.listlocation, self.insert_column, QTableWidgetItem(key))
-        if self.insert_column == 2:
-            self.insert_column = 1
+        rating_columns = [i for i in range(1, self.tableWidget.columnCount())]
+        if not rating_columns:
+            return
+
+        if self.insert_column not in rating_columns:
+            self.insert_column = rating_columns[0]
+
+        self.tableWidget.setItem(
+            self.listlocation, self.insert_column, QTableWidgetItem(key)
+        )
+
+        current_idx = rating_columns.index(self.insert_column)
+        if current_idx == len(rating_columns) - 1:
+            self.insert_column = rating_columns[0]
             if (self.listlocation + 1) != len(self.filelist):
                 self.listlocation += 1
                 self.label.load(self.filelist[self.listlocation])
@@ -77,7 +141,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
                 )
                 self.tableWidget.selectRow(self.listlocation)
         else:
-            self.insert_column = 2
+            self.insert_column = rating_columns[current_idx + 1]
 
     def navup(self):
         self.insert_column = 1
@@ -108,7 +172,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
     def scaleImage(self, factor):
         if not self.label.content or self.label.content.size().width() == 0:
             return  # Protect against empty content and ZeroDivisionError
-            
+
         if not self.scaleFactor:
             self.scaleFactor = (
                 self.label.size().width() / self.label.content.size().width()
@@ -124,11 +188,45 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             int(factor * scrollBar.value() + ((factor - 1) * scrollBar.pageStep() / 2))
         )
 
-    def wheelEvent(self, event):
+    def zoomTo1_1(self):
+        if not self.label.content or self.label.content.size().width() == 0:
+            return
+        self.scrollArea.setWidgetResizable(False)
+        self.scaleFactor = 1.0
+        self.label.resize(self.label.content.size())
+
+    def zoomToFit(self):
+        if not self.label.content or self.label.content.size().width() == 0:
+            return
+        content_size = self.label.content.size()
+        viewport_size = self.scrollArea.viewport().size()
+        scale_width = viewport_size.width() / content_size.width()
+        scale_height = viewport_size.height() / content_size.height()
+        self.scaleFactor = min(scale_width, scale_height)
+        self.scrollArea.setWidgetResizable(False)
+        self.label.resize(self.scaleFactor * content_size)
+
+    def zoomIn(self):
+        self.scaleImage(1.1)
+
+    def zoomOut(self):
+        self.scaleImage(0.9)
+
+    def wheelEvent(self, a0: QWheelEvent | None) -> None:
+        if a0 is None:
+            return
+        event = a0
         if event.angleDelta().y() > 0:
             self.scaleImage(1.1)
         else:
             self.scaleImage(0.9)
+
+    def resizeEvent(self, a0: QResizeEvent | None) -> None:
+        if a0 is None:
+            return
+        event = a0
+        if self.scaleFactor and not self.scrollArea.widgetResizable():
+            self.zoomToFit()
 
     def openDir(self):
         self.directory = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
@@ -166,7 +264,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         )
         if not self.filelist:
             return
-            
+
         self.tableWidget.setRowCount(len(self.filelist))
         for i in range(len(self.filelist)):
             item = QTableWidgetItem()
@@ -190,34 +288,48 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         print("Opening CSV file: {}".format(path))
         self.path = path
         with open(path, "r", newline="") as f:
-            nrows = 0
             reader = csv.reader(f)
-            for row in reader:
-                nrows += 1
+            rows = list(reader)
 
-        self.tableWidget.setRowCount(nrows)
-        self.filelist = []
-        
-        if nrows == 0:
+        if not rows:
             print("Warning: CSV file is empty.")
             return
-            
-        self.listlocation = nrows-1
-        with open(path, "r", newline="") as f:
-            reader = csv.reader(f)
-            for row, rowdata in enumerate(reader):
-                if not rowdata:
-                    continue
-                self.filelist.append(rowdata[0])
-                for column in range(3):
-                    val = rowdata[column+1] if len(rowdata) > column + 1 else ""
-                    item = QTableWidgetItem(val)
-                    self.tableWidget.setItem(row, column, item)
-                # Start at first row with no QC rating
-                if len(rowdata) > 3 and ((rowdata[2]=="") or (rowdata[3]=="")) and row < self.listlocation:
-                    self.listlocation = row
-                elif len(rowdata) <= 3 and row < self.listlocation:
-                    self.listlocation = row
+
+        self.tableWidget.setRowCount(len(rows))
+        self.filelist = []
+        self.column_names = ["File"]
+
+        # Extract column names from first row if it looks like headers
+        first_row = rows[0]
+        if len(first_row) >= 2 and first_row[0] != "":
+            # Assume first row contains headers
+            for col_name in first_row[1:]:
+                if col_name and col_name not in self.column_names:
+                    self.column_names.append(col_name)
+
+        self.listlocation = len(rows) - 1
+        for row_idx, rowdata in enumerate(rows):
+            if not rowdata:
+                continue
+            self.filelist.append(rowdata[0])
+            num_cols = len(self.column_names)
+            for column in range(num_cols):
+                val = rowdata[column] if len(rowdata) > column else ""
+                item = QTableWidgetItem(val)
+                self.tableWidget.setItem(row_idx, column, item)
+
+            # Find first unrated row
+            for i in range(1, min(len(self.column_names), len(rowdata))):
+                if (
+                    i < len(rowdata)
+                    and rowdata[i] == ""
+                    and row_idx < self.listlocation
+                ):
+                    self.listlocation = row_idx
+                    break
+
+        self.tableWidget.setHorizontalHeaderLabels(self.column_names)
+        self.tableWidget.resizeColumnsToContents()
 
         self.label.load(self.filelist[self.listlocation])
         self.tableWidget.scrollToItem(
@@ -230,7 +342,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         if not self.filelist:
             print("Warning: No image files provided.")
             return
-            
+
         self.tableWidget.setRowCount(len(self.filelist))
         for i in range(len(self.filelist)):
             item = QTableWidgetItem()
@@ -245,13 +357,17 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self.tableWidget.selectRow(self.listlocation)
 
     def switchToItem(self, row, column):
-        self.insert_column = 1
         self.listlocation = row
         self.label.load(self.filelist[self.listlocation])
         self.scrollArea.setWidgetResizable(True)
         self.scaleFactor = None
+        rating_columns = [i for i in range(1, self.tableWidget.columnCount())]
+        if column in rating_columns:
+            self.insert_column = column
+        elif rating_columns:
+            self.insert_column = rating_columns[0]
         self.tableWidget.scrollToItem(
-            self.tableWidget.item(self.listlocation, 1),
+            self.tableWidget.item(self.listlocation, self.insert_column),
             QAbstractItemView.PositionAtCenter,
         )
         self.tableWidget.selectRow(self.listlocation)
@@ -260,8 +376,9 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self.insert_column = 1
         if self.listlocation > 0:
             self.listlocation -= 1
-        self.tableWidget.setItem(self.listlocation, 1, QTableWidgetItem(""))
-        self.tableWidget.setItem(self.listlocation, 2, QTableWidgetItem(""))
+        rating_columns = [i for i in range(1, self.tableWidget.columnCount())]
+        for col in rating_columns:
+            self.tableWidget.setItem(self.listlocation, col, QTableWidgetItem(""))
         self.label.load(self.filelist[self.listlocation])
         self.scrollArea.setWidgetResizable(True)
         self.scaleFactor = None
@@ -285,7 +402,6 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
                         else:
                             rowdata.append("")
                     writer.writerow(rowdata)
-            f.close()
 
     def Save(self):
         if self.path:
@@ -302,6 +418,108 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
                     writer.writerow(rowdata)
         else:
             self.SaveAs()
+
+    def showColumnContextMenu(self, pos):
+        header = self.tableWidget.horizontalHeader()
+
+        if header.underMouse():
+            local_col = header.logicalIndexAt(pos)
+            header_pos = header.mapToGlobal(pos)
+        else:
+            local_col = self.tableWidget.columnAt(pos.x())
+            header_pos = header.mapToGlobal(
+                self.tableWidget.viewport().mapFromGlobal(pos)
+            )
+
+        if local_col == -1:
+            return
+
+        menu = QMenu(self)
+
+        if local_col > 0:
+            add_action = menu.addAction("Add Column")  # type: ignore[assignment]
+            add_action.triggered.connect(self.addColumn)  # type: ignore[union-attr]
+
+            rename_action = menu.addAction("Rename Column")  # type: ignore[assignment]
+            rename_action.triggered.connect(self.renameColumn)  # type: ignore[union-attr]
+
+            remove_action = menu.addAction("Remove Column")  # type: ignore[assignment]
+            remove_action.triggered.connect(self.removeColumn)  # type: ignore[union-attr]
+
+        menu.exec_(header_pos)
+
+    def addColumn(self):
+        dialog = QInputDialog(self)
+        dialog.setWindowTitle("Add Column")
+        dialog.setLabelText("Column name:")
+        dialog.setTextValue("QC_New")
+
+        if dialog.exec_() == QDialog.Accepted:
+            new_name = dialog.textValue().strip()
+            if not new_name:
+                return
+            if new_name in self.column_names:
+                return
+
+            self.column_names.append(new_name)
+            self.tableWidget.insertColumn(self.tableWidget.columnCount())
+            header_item = QTableWidgetItem(new_name)
+            header_item.setTextAlignment(Qt.AlignCenter)  # type: ignore[attr-defined]
+            self.tableWidget.setHorizontalHeaderItem(
+                self.tableWidget.columnCount() - 1, header_item
+            )
+
+            for row in range(self.tableWidget.rowCount()):
+                self.tableWidget.setItem(
+                    row, self.tableWidget.columnCount() - 1, QTableWidgetItem("")
+                )
+
+            self.tableWidget.resizeColumnsToContents()
+            self.tableWidget.setHorizontalHeaderLabels(self.column_names)
+
+    def renameColumn(self):
+        local_col = self.tableWidget.currentColumn()
+        if local_col <= 0:
+            return
+
+        old_name = self.column_names[local_col]
+
+        dialog = QInputDialog(self)
+        dialog.setWindowTitle("Rename Column")
+        dialog.setLabelText("New column name:")
+        dialog.setTextValue(old_name)
+
+        if dialog.exec_() == QDialog.Accepted:
+            new_name = dialog.textValue().strip()
+            if not new_name:
+                return
+
+            self.column_names[local_col] = new_name
+            header_item = self.tableWidget.horizontalHeaderItem(local_col)
+            if header_item:
+                header_item.setText(new_name)
+            self.tableWidget.resizeColumnsToContents()
+
+    def removeColumn(self):
+        local_col = self.tableWidget.currentColumn()
+        if local_col <= 0:
+            return
+
+        reply = QMessageBox.question(
+            self,
+            "Confirm Remove",
+            f"Remove column '{self.column_names[local_col]}'? This will delete all data in this column.",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+
+        if reply == QMessageBox.Yes:
+            self.column_names.pop(local_col)
+            self.tableWidget.removeColumn(local_col)
+
+            if self.tableWidget.columnCount() > 0:
+                self.tableWidget.setHorizontalHeaderLabels(self.column_names)
+                self.tableWidget.resizeColumnsToContents()
 
 
 def main():
