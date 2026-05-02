@@ -104,6 +104,31 @@ def test_save_skips_rows_past_filelist(qapp, tmp_path):
     assert lines == ["File,QC_Raw,QC_Pre", "/tmp/only.jpg,3,"]
 
 
+def test_reload_resets_prior_state(qapp, tmp_path):
+    """A second load must fully replace columns, paths, and the saved-CSV path."""
+    custom_csv = tmp_path / "custom.csv"
+    custom_csv.write_text(
+        "File,Score1,Score2,Score3\n"
+        "/tmp/a.png,1,2,3\n"
+        "/tmp/b.png,4,5,6\n"
+    )
+    window = PyQC.MainWindow()
+    window.loadCSV(str(custom_csv))
+
+    assert window.path == str(custom_csv)
+    assert window.tableWidget.columnCount() == 4
+    assert window.column_names == ["File", "Score1", "Score2", "Score3"]
+
+    window.openArgumentFiles(["/tmp/x.jpg", "/tmp/y.jpg"])
+
+    assert window.path is None
+    assert window.column_names == ["File", "QC_Raw", "QC_Pre"]
+    assert window.tableWidget.columnCount() == 3
+    assert window.filelist == ["/tmp/x.jpg", "/tmp/y.jpg"]
+    assert window.tableWidget.rowCount() == 2
+    assert window.tableWidget.item(0, 0).text() == "x"
+
+
 def test_listlocation_lands_on_first_unrated(qapp, tmp_path):
     csv_path = tmp_path / "partial.csv"
     csv_path.write_text(

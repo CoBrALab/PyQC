@@ -95,8 +95,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self.tableWidget.resizeColumnsToContents()
 
         if files:
-            self.filelist = files
-            self.openArgumentFiles()
+            self.openArgumentFiles(files)
 
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         if a0 is None:
@@ -228,60 +227,56 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         if self.scaleFactor and not self.scrollArea.widgetResizable():
             self.zoomToFit()
 
+    def _reset_table(self):
+        """Wipe table state back to defaults. Called by every loader so that
+        re-opening data never inherits stale columns, ratings, or paths."""
+        self.column_names = ["File", "QC_Raw", "QC_Pre"]
+        self.tableWidget.clearContents()
+        self.tableWidget.setRowCount(0)
+        self.tableWidget.setColumnCount(len(self.column_names))
+        self.tableWidget.setHorizontalHeaderLabels(self.column_names)
+        self.path = None
+        self.filelist = []
+        self.listlocation = 0
+        self.scaleFactor = None
+        self.insert_column = 1
+
     def openDir(self):
-        self.directory = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
-        if self.directory:
-            self.loadDirectory(self.directory)
+        directory = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
+        if directory:
+            self.loadDirectory(directory)
 
     def loadDirectory(self, directory):
         """Load images from a directory."""
-        self.filelist = glob.glob(directory + "/*.jpg")
-        self.filelist.extend(glob.glob(directory + "/*.png"))
-        self.filelist.extend(glob.glob(directory + "/*.gif"))
-        self.filelist.extend(glob.glob(directory + "/*.webp"))
-        self.filelist.extend(glob.glob(directory + "/*.jpeg"))
+        files = glob.glob(directory + "/*.jpg")
+        files.extend(glob.glob(directory + "/*.png"))
+        files.extend(glob.glob(directory + "/*.gif"))
+        files.extend(glob.glob(directory + "/*.webp"))
+        files.extend(glob.glob(directory + "/*.jpeg"))
 
-        if not self.filelist:
+        if not files:
             print("Warning: No image files found.")
             return
 
-        self.tableWidget.setRowCount(len(self.filelist))
-        for i in range(len(self.filelist)):
-            item = QTableWidgetItem()
-            item.setText(os.path.splitext(os.path.basename(self.filelist[i]))[0])
-            self.tableWidget.setItem(i, 0, item)
-        self.listlocation = 0
-        self.label.load(self.filelist[self.listlocation])
-        self.tableWidget.scrollToItem(
-            self.tableWidget.item(self.listlocation, 0),
-            QAbstractItemView.PositionAtCenter,
-        )
-        self.tableWidget.selectRow(self.listlocation)
+        self._reset_table()
+        self.filelist = files
+        self._populate_from_filelist()
 
     def openFiles(self):
-        self.filelist, _ = QFileDialog.getOpenFileNames(
+        files, _ = QFileDialog.getOpenFileNames(
             self, "Select Files", "", ("Images (*.gif *.png *.jpg *.jpeg *.webp)")
         )
-        if not self.filelist:
+        if not files:
             return
 
-        self.tableWidget.setRowCount(len(self.filelist))
-        for i in range(len(self.filelist)):
-            item = QTableWidgetItem()
-            item.setText(os.path.splitext(os.path.basename(self.filelist[i]))[0])
-            self.tableWidget.setItem(i, 0, item)
-        self.listlocation = 0
-        self.label.load(self.filelist[self.listlocation])
-        self.tableWidget.scrollToItem(
-            self.tableWidget.item(self.listlocation, 0),
-            QAbstractItemView.PositionAtCenter,
-        )
-        self.tableWidget.selectRow(self.listlocation)
+        self._reset_table()
+        self.filelist = list(files)
+        self._populate_from_filelist()
 
     def openCSV(self):
-        self.path, _ = QFileDialog.getOpenFileName(self, "Open File", "", "CSV(*.csv)")
-        if self.path:
-            self.loadCSV(self.path)
+        path, _ = QFileDialog.getOpenFileName(self, "Open File", "", "CSV(*.csv)")
+        if path:
+            self.loadCSV(path)
 
     def loadCSV(self, path):
         """Load images and ratings from a CSV file.
@@ -291,7 +286,6 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         are still accepted and assumed to use the default columns.
         """
         print("Opening CSV file: {}".format(path))
-        self.path = path
         with open(path, "r", newline="") as f:
             reader = csv.reader(f)
             rows = list(reader)
@@ -301,21 +295,23 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             return
 
         if rows[0] and rows[0][0] == "File":
-            self.column_names = [c for c in rows[0] if c]
+            column_names = [c for c in rows[0] if c]
             data_rows = rows[1:]
         else:
-            self.column_names = ["File", "QC_Raw", "QC_Pre"]
+            column_names = ["File", "QC_Raw", "QC_Pre"]
             data_rows = rows
 
         if not data_rows:
             print("Warning: CSV file has no data rows.")
             return
 
+        self._reset_table()
+        self.path = path
+        self.column_names = column_names
         self.tableWidget.setColumnCount(len(self.column_names))
         self.tableWidget.setHorizontalHeaderLabels(self.column_names)
         self.tableWidget.setRowCount(len(data_rows))
 
-        self.filelist = []
         self.listlocation = len(data_rows) - 1
         first_unrated_found = False
 
@@ -350,17 +346,20 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             )
             self.tableWidget.selectRow(self.listlocation)
 
-    def openArgumentFiles(self):
-        if not self.filelist:
+    def openArgumentFiles(self, files):
+        if not files:
             print("Warning: No image files provided.")
             return
+        self._reset_table()
+        self.filelist = list(files)
+        self._populate_from_filelist()
 
+    def _populate_from_filelist(self):
+        """Render self.filelist into the table and load the first image."""
         self.tableWidget.setRowCount(len(self.filelist))
-        for i in range(len(self.filelist)):
-            item = QTableWidgetItem()
-            item.setText(os.path.splitext(os.path.basename(self.filelist[i]))[0])
-            self.tableWidget.setItem(i, 0, item)
-        self.listlocation = 0
+        for i, path in enumerate(self.filelist):
+            display = os.path.splitext(os.path.basename(path))[0]
+            self.tableWidget.setItem(i, 0, QTableWidgetItem(display))
         self.label.load(self.filelist[self.listlocation])
         self.tableWidget.scrollToItem(
             self.tableWidget.item(self.listlocation, 0),
@@ -587,8 +586,7 @@ Examples:
 
     # Load files based on arguments
     if args.files:
-        form.filelist = args.files
-        form.openArgumentFiles()
+        form.openArgumentFiles(args.files)
     elif args.directory:
         form.loadDirectory(args.directory)
     elif args.csv:
