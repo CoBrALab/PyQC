@@ -284,7 +284,12 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             self.loadCSV(self.path)
 
     def loadCSV(self, path):
-        """Load images and ratings from a CSV file."""
+        """Load images and ratings from a CSV file.
+
+        Expected format: a header row whose first cell is "File", followed by
+        data rows of [path, rating1, rating2, ...]. CSVs without a header row
+        are still accepted and assumed to use the default columns.
+        """
         print("Opening CSV file: {}".format(path))
         self.path = path
         with open(path, "r", newline="") as f:
@@ -295,48 +300,55 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             print("Warning: CSV file is empty.")
             return
 
-        self.tableWidget.setRowCount(len(rows))
+        if rows[0] and rows[0][0] == "File":
+            self.column_names = [c for c in rows[0] if c]
+            data_rows = rows[1:]
+        else:
+            self.column_names = ["File", "QC_Raw", "QC_Pre"]
+            data_rows = rows
+
+        if not data_rows:
+            print("Warning: CSV file has no data rows.")
+            return
+
+        self.tableWidget.setColumnCount(len(self.column_names))
+        self.tableWidget.setHorizontalHeaderLabels(self.column_names)
+        self.tableWidget.setRowCount(len(data_rows))
+
         self.filelist = []
-        self.column_names = ["File"]
+        self.listlocation = len(data_rows) - 1
+        first_unrated_found = False
 
-        # Extract column names from first row if it looks like headers
-        first_row = rows[0]
-        if len(first_row) >= 2 and first_row[0] != "":
-            # Assume first row contains headers
-            for col_name in first_row[1:]:
-                if col_name and col_name not in self.column_names:
-                    self.column_names.append(col_name)
-
-        self.listlocation = len(rows) - 1
-        for row_idx, rowdata in enumerate(rows):
+        for row_idx, rowdata in enumerate(data_rows):
             if not rowdata:
                 continue
-            self.filelist.append(rowdata[0])
-            num_cols = len(self.column_names)
-            for column in range(num_cols):
-                val = rowdata[column] if len(rowdata) > column else ""
-                item = QTableWidgetItem(val)
-                self.tableWidget.setItem(row_idx, column, item)
+            file_path = rowdata[0]
+            self.filelist.append(file_path)
 
-            # Find first unrated row
-            for i in range(1, min(len(self.column_names), len(rowdata))):
-                if (
-                    i < len(rowdata)
-                    and rowdata[i] == ""
-                    and row_idx < self.listlocation
-                ):
-                    self.listlocation = row_idx
-                    break
+            display = os.path.splitext(os.path.basename(file_path))[0]
+            self.tableWidget.setItem(row_idx, 0, QTableWidgetItem(display))
 
-        self.tableWidget.setHorizontalHeaderLabels(self.column_names)
+            for column in range(1, len(self.column_names)):
+                val = rowdata[column] if column < len(rowdata) else ""
+                self.tableWidget.setItem(row_idx, column, QTableWidgetItem(val))
+
+            if not first_unrated_found:
+                for column in range(1, len(self.column_names)):
+                    val = rowdata[column] if column < len(rowdata) else ""
+                    if val == "":
+                        self.listlocation = row_idx
+                        first_unrated_found = True
+                        break
+
         self.tableWidget.resizeColumnsToContents()
 
-        self.label.load(self.filelist[self.listlocation])
-        self.tableWidget.scrollToItem(
-            self.tableWidget.item(self.listlocation, 0),
-            QAbstractItemView.PositionAtCenter,
-        )
-        self.tableWidget.selectRow(self.listlocation)
+        if self.filelist:
+            self.label.load(self.filelist[self.listlocation])
+            self.tableWidget.scrollToItem(
+                self.tableWidget.item(self.listlocation, 0),
+                QAbstractItemView.PositionAtCenter,
+            )
+            self.tableWidget.selectRow(self.listlocation)
 
     def openArgumentFiles(self):
         if not self.filelist:
@@ -388,34 +400,29 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         )
         self.tableWidget.selectRow(self.listlocation)
 
+    def _write_csv(self, path):
+        """Write column_names as the header row, then [path, rating1, ...]."""
+        with open(path, "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(self.column_names)
+            for row in range(self.tableWidget.rowCount()):
+                if row >= len(self.filelist):
+                    continue
+                rowdata = [self.filelist[row]]
+                for column in range(1, len(self.column_names)):
+                    item = self.tableWidget.item(row, column)
+                    rowdata.append(item.text() if item is not None else "")
+                writer.writerow(rowdata)
+
     def SaveAs(self):
-        self.path, _ = QFileDialog.getSaveFileName(self, "Save File", "", "CSV(*.csv)")
-        if self.path:
-            with open(self.path, "w", newline="") as f:
-                writer = csv.writer(f)
-                for row in range(self.tableWidget.rowCount()):
-                    rowdata = [self.filelist[row]]
-                    for column in range(self.tableWidget.columnCount()):
-                        item = self.tableWidget.item(row, column)
-                        if item is not None:
-                            rowdata.append(item.text())
-                        else:
-                            rowdata.append("")
-                    writer.writerow(rowdata)
+        path, _ = QFileDialog.getSaveFileName(self, "Save File", "", "CSV(*.csv)")
+        if path:
+            self.path = path
+            self._write_csv(self.path)
 
     def Save(self):
         if self.path:
-            with open(self.path, "w", newline="") as f:
-                writer = csv.writer(f)
-                for row in range(self.tableWidget.rowCount()):
-                    rowdata = [self.filelist[row]]
-                    for column in range(self.tableWidget.columnCount()):
-                        item = self.tableWidget.item(row, column)
-                        if item is not None:
-                            rowdata.append(item.text())
-                        else:
-                            rowdata.append("")
-                    writer.writerow(rowdata)
+            self._write_csv(self.path)
         else:
             self.SaveAs()
 
