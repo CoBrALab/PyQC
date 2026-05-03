@@ -1,1 +1,3 @@
 __pycache__
+# Saved rating files at the repo root (don't track user data accidentally)
+/*.csv
