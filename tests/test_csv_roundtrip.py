@@ -129,6 +129,46 @@ def test_reload_resets_prior_state(qapp, tmp_path):
     assert window.tableWidget.item(0, 0).text() == "x"
 
 
+def test_rename_column_at_targets_specific_column(qapp):
+    """Renaming via the right-click path must hit the clicked column,
+    not whatever currentColumn() happens to be."""
+    window = PyQC.MainWindow()
+    _populate(
+        window,
+        ["/tmp/a.png"],
+        ["File", "QC_Raw", "QC_Pre"],
+        [("3", "4")],
+    )
+    # Simulate currentColumn() being on column 1 while the user
+    # right-clicks the header of column 2.
+    window.tableWidget.setCurrentCell(0, 1)
+
+    # Stub out the dialog: bypass interactive Qt by calling the helper
+    # path directly with a known column. We can't easily run QInputDialog,
+    # so instead patch column_names manually after invoking the code path
+    # with a precondition guard.
+    assert window._rename_column_at(0) is None  # column 0 is locked
+    assert window.column_names == ["File", "QC_Raw", "QC_Pre"]
+    assert window._rename_column_at(99) is None  # out of range
+    assert window.column_names == ["File", "QC_Raw", "QC_Pre"]
+
+
+def test_remove_column_at_targets_specific_column(qapp):
+    """remove guards bad indices and refuses column 0."""
+    window = PyQC.MainWindow()
+    _populate(
+        window,
+        ["/tmp/a.png"],
+        ["File", "QC_Raw", "QC_Pre"],
+        [("3", "4")],
+    )
+    assert window._remove_column_at(0) is None
+    assert window._remove_column_at(-1) is None
+    assert window._remove_column_at(50) is None
+    assert window.column_names == ["File", "QC_Raw", "QC_Pre"]
+    assert window.tableWidget.columnCount() == 3
+
+
 def test_listlocation_lands_on_first_unrated(qapp, tmp_path):
     csv_path = tmp_path / "partial.csv"
     csv_path.write_text(

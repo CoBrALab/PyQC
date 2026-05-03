@@ -447,10 +447,14 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             add_action.triggered.connect(self.addColumn)  # type: ignore[union-attr]
 
             rename_action = menu.addAction("Rename Column")  # type: ignore[assignment]
-            rename_action.triggered.connect(self.renameColumn)  # type: ignore[union-attr]
+            rename_action.triggered.connect(  # type: ignore[union-attr]
+                lambda _checked=False, c=local_col: self._rename_column_at(c)
+            )
 
             remove_action = menu.addAction("Remove Column")  # type: ignore[assignment]
-            remove_action.triggered.connect(self.removeColumn)  # type: ignore[union-attr]
+            remove_action.triggered.connect(  # type: ignore[union-attr]
+                lambda _checked=False, c=local_col: self._remove_column_at(c)
+            )
 
         menu.exec_(header_pos)
 
@@ -484,11 +488,13 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             self.tableWidget.setHorizontalHeaderLabels(self.column_names)
 
     def renameColumn(self):
-        local_col = self.tableWidget.currentColumn()
-        if local_col <= 0:
+        self._rename_column_at(self.tableWidget.currentColumn())
+
+    def _rename_column_at(self, column):
+        if column <= 0 or column >= len(self.column_names):
             return
 
-        old_name = self.column_names[local_col]
+        old_name = self.column_names[column]
 
         dialog = QInputDialog(self)
         dialog.setWindowTitle("Rename Column")
@@ -500,28 +506,30 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             if not new_name:
                 return
 
-            self.column_names[local_col] = new_name
-            header_item = self.tableWidget.horizontalHeaderItem(local_col)
+            self.column_names[column] = new_name
+            header_item = self.tableWidget.horizontalHeaderItem(column)
             if header_item:
                 header_item.setText(new_name)
             self.tableWidget.resizeColumnsToContents()
 
     def removeColumn(self):
-        local_col = self.tableWidget.currentColumn()
-        if local_col <= 0:
+        self._remove_column_at(self.tableWidget.currentColumn())
+
+    def _remove_column_at(self, column):
+        if column <= 0 or column >= len(self.column_names):
             return
 
         reply = QMessageBox.question(
             self,
             "Confirm Remove",
-            f"Remove column '{self.column_names[local_col]}'? This will delete all data in this column.",
+            f"Remove column '{self.column_names[column]}'? This will delete all data in this column.",
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
         )
 
         if reply == QMessageBox.Yes:
-            self.column_names.pop(local_col)
-            self.tableWidget.removeColumn(local_col)
+            self.column_names.pop(column)
+            self.tableWidget.removeColumn(column)
 
             if self.tableWidget.columnCount() > 0:
                 self.tableWidget.setHorizontalHeaderLabels(self.column_names)
