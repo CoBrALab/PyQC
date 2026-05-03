@@ -32,18 +32,6 @@ uv run pyqc --csv ratings.csv
 
 ## Usage
 
-Load data via either the command line or the open files
-open directory function.
-
-Use the numeric keys on the keybord to assign that score
-to current image.
-
-Use `w` and `s` or `/` and `*` to navigatge up and down the list without
-assigning a rating. Use `.` to undo previous rating.
-`+` and `-` control image zoom.
-
-## Usage
-
 Load data via the command line or use the GUI menu options:
 - **Open Directory**: Load all images from a folder
 - **Open Files**: Select specific image files
@@ -56,7 +44,7 @@ Load data via the command line or use the GUI menu options:
 | 0-9 | Assign rating (alternates between QC_Raw and QC_Pre) |
 | W or / | Navigate up without rating |
 | S or * | Navigate down without rating |
-| . | Undo - go back and clear previous ratings |
+| . | Undo - clear the most recently entered rating cell |
 | +/- | Zoom in/out |
 | Mouse wheel | Zoom in/out |
 
@@ -66,38 +54,12 @@ View Control Settings
 
 ## Development notes
 
-### To re-generate GUI:
+### To re-generate the GUI:
 
-First, use `pyuic5` to automatically generate the python code from the user interface `.ui` file:
+`window1.ui` promotes the image label to `SaneDefaultsImageLabel`, so
+`pyuic5` generates a working `window1.py` with no manual edits:
 
-``pyuic5 window1.ui -o window1.py``
-
-Then, modify window1.py as follows:
-
-- import from `image_widgets.py`:
-
-```python
-# Add the following:
-from image_widget import *
-```
-
-- Switch from `QtWidgets.QLabel` to `SaneDefaultsImageLabel`:
-
-```python
-# Replace (around line 90):
-self.label = QtWidgets.QLabel(self.scrollAreaWidgetContents)
-
-# with
-self.label = SaneDefaultsImageLabel()
-```
-
-- Switch from `scrollAreaWidgetContents` to `label`:
-
-```python
-# Replace (around line 100):
-self.scrollArea.setWidget(self.scrollAreaWidgetContents)
-
-# with
-self.scrollArea.setWidget(self.label)
+```bash
+pyuic5 window1.ui -o window1.py
 ```
 

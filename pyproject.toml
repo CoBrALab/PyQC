@@ -3,7 +3,7 @@ name = "pyqc"
 version = "0.1.0"
 description = "A tool for reviewing QC images and storing ratings"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 dependencies = [
     "pyqt5>=5.15.0",
 ]
@@ -11,9 +11,20 @@ dependencies = [
 [project.scripts]
 pyqc = "PyQC:main"
 
+[dependency-groups]
+dev = [
+    "pytest>=7.0",
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["."]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.ruff.lint.per-file-ignores]
+# window1.py is auto-generated from window1.ui via pyuic5. pyuic5 always
+# emits all three Qt submodule imports even when one is unused (F401),
+# and emits the custom-widget import at the bottom of the file (E402).
+"window1.py" = ["E402", "F401"]
