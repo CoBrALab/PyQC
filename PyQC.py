@@ -42,7 +42,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self.actionAdd_Column.triggered.connect(self.addColumn)
         self.actionRename_Column.triggered.connect(self.renameColumn)
         self.actionRemove_Column.triggered.connect(self.removeColumn)
-        self.action_Quit.triggered.connect(QApplication.quit)
+        self.action_Quit.triggered.connect(self.close)
         self.action_Zoom_1_1.triggered.connect(self.zoomTo1_1)
         self.action_Zoom_Fit.triggered.connect(self.zoomToFit)
         self.action_Zoom_In.triggered.connect(self.zoomIn)
@@ -56,6 +56,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self._fit_mode = False
         self.insert_column = 1
         self.column_names = ["File", "QC_Raw", "QC_Pre"]
+        self._dirty = False
 
         self.tableWidget.cellClicked.connect(self.switchToItem)
         self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
@@ -115,6 +116,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self.tableWidget.setItem(
             self.listlocation, self.insert_column, QTableWidgetItem(key)
         )
+        self._dirty = True
 
         idx = rating_columns.index(self.insert_column)
         if idx == len(rating_columns) - 1:
@@ -207,8 +209,38 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self.scaleFactor = None
         self._fit_mode = False
         self.insert_column = 1
+        self._dirty = False
+
+    def _confirm_discard_changes(self):
+        """Prompt to save unsaved ratings. Returns True if the caller may
+        proceed (saved or discarded), False on cancel or failed save."""
+        if not self._dirty:
+            return True
+        reply = QMessageBox.question(
+            self,
+            "Unsaved Changes",
+            "You have unsaved ratings. Save before continuing?",
+            QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
+            QMessageBox.Cancel,
+        )
+        if reply == QMessageBox.Cancel:
+            return False
+        if reply == QMessageBox.Yes:
+            self.Save()
+            return not self._dirty
+        return True
+
+    def closeEvent(self, a0):
+        if not self._confirm_discard_changes():
+            if a0 is not None:
+                a0.ignore()
+            return
+        if a0 is not None:
+            a0.accept()
 
     def openDir(self):
+        if not self._confirm_discard_changes():
+            return
         directory = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
         if directory:
             self.loadDirectory(directory)
@@ -232,6 +264,8 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self._populate_from_filelist()
 
     def openFiles(self):
+        if not self._confirm_discard_changes():
+            return
         files, _ = QFileDialog.getOpenFileNames(
             self, "Select Files", "", ("Images (*.gif *.png *.jpg *.jpeg *.webp)")
         )
@@ -243,6 +277,8 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self._populate_from_filelist()
 
     def openCSV(self):
+        if not self._confirm_discard_changes():
+            return
         path, _ = QFileDialog.getOpenFileName(self, "Open File", "", "CSV(*.csv)")
         if path:
             self.loadCSV(path)
@@ -281,6 +317,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self.tableWidget.setHorizontalHeaderLabels(self.column_names)
         self.tableWidget.setRowCount(len(data_rows))
 
+        csv_dir = os.path.dirname(os.path.abspath(path))
         self.listlocation = len(data_rows) - 1
         first_unrated_found = False
 
@@ -288,6 +325,8 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             if not rowdata:
                 continue
             file_path = rowdata[0]
+            if not os.path.isabs(file_path):
+                file_path = os.path.normpath(os.path.join(csv_dir, file_path))
             self.filelist.append(file_path)
 
             display = os.path.splitext(os.path.basename(file_path))[0]
@@ -359,11 +398,13 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
                 self.listlocation, prev_col, QTableWidgetItem("")
             )
             self.insert_column = prev_col
+            self._dirty = True
         elif self.listlocation > 0:
             target_row = self.listlocation - 1
             last_col = rating_columns[-1]
             self.tableWidget.setItem(target_row, last_col, QTableWidgetItem(""))
             self.insert_column = last_col
+            self._dirty = True
             self._go_to_row(target_row)
 
     def _write_csv(self, path):
@@ -379,6 +420,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
                     item = self.tableWidget.item(row, column)
                     rowdata.append(item.text() if item is not None else "")
                 writer.writerow(rowdata)
+        self._dirty = False
 
     def SaveAs(self):
         path, _ = QFileDialog.getSaveFileName(self, "Save File", "", "CSV(*.csv)")
@@ -456,6 +498,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
                     row, self.tableWidget.columnCount() - 1, QTableWidgetItem("")
                 )
 
+            self._dirty = True
             self.tableWidget.resizeColumnsToContents()
 
     def renameColumn(self):
@@ -481,6 +524,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             header_item = self.tableWidget.horizontalHeaderItem(column)
             if header_item:
                 header_item.setText(new_name)
+            self._dirty = True
             self.tableWidget.resizeColumnsToContents()
 
     def removeColumn(self):
@@ -505,6 +549,8 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             rating_columns = list(range(1, self.tableWidget.columnCount()))
             if rating_columns and self.insert_column not in rating_columns:
                 self.insert_column = rating_columns[0]
+
+            self._dirty = True
 
             if self.tableWidget.columnCount() > 0:
                 self.tableWidget.setHorizontalHeaderLabels(self.column_names)

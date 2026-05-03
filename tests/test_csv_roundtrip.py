@@ -245,6 +245,66 @@ def test_loadDirectory_picks_up_mixed_case_extensions_sorted(qapp, tmp_path):
     assert window.tableWidget.item(0, 0).text() == "a"
 
 
+def test_csv_relative_paths_resolve_against_csv_dir(qapp, tmp_path):
+    """B12: a relative path in a CSV is anchored to the CSV's directory."""
+    csv_path = tmp_path / "ratings.csv"
+    csv_path.write_text("File,QC_Raw,QC_Pre\nimg1.jpg,5,4\nsubdir/img2.png,,\n")
+
+    window = PyQC.MainWindow()
+    window.loadCSV(str(csv_path))
+
+    assert window.filelist == [
+        str(tmp_path / "img1.jpg"),
+        str(tmp_path / "subdir" / "img2.png"),
+    ]
+
+
+def test_csv_absolute_paths_pass_through(qapp, tmp_path):
+    csv_path = tmp_path / "ratings.csv"
+    csv_path.write_text("File,QC_Raw,QC_Pre\n/var/x.jpg,1,2\n")
+
+    window = PyQC.MainWindow()
+    window.loadCSV(str(csv_path))
+
+    assert window.filelist == ["/var/x.jpg"]
+
+
+def test_dirty_flag_set_on_rating_cleared_on_save(qapp, tmp_path):
+    """B13: dirty starts False, set on numpress, cleared on _write_csv."""
+    window = PyQC.MainWindow()
+    _populate(
+        window,
+        ["/tmp/a.png"],
+        ["File", "QC_Raw", "QC_Pre"],
+        [("", "")],
+    )
+    window._dirty = False  # _populate uses raw setItem; reset for clarity
+
+    window.numpress("5")
+    assert window._dirty is True
+
+    window._write_csv(str(tmp_path / "out.csv"))
+    assert window._dirty is False
+
+
+def test_dirty_flag_cleared_on_load(qapp, tmp_path):
+    csv_path = tmp_path / "in.csv"
+    csv_path.write_text("File,QC_Raw,QC_Pre\n/tmp/a.png,1,2\n")
+
+    window = PyQC.MainWindow()
+    _populate(
+        window,
+        ["/tmp/x.png"],
+        ["File", "QC_Raw", "QC_Pre"],
+        [("", "")],
+    )
+    window.numpress("9")
+    assert window._dirty is True
+
+    window.loadCSV(str(csv_path))
+    assert window._dirty is False
+
+
 def test_listlocation_lands_on_first_unrated(qapp, tmp_path):
     csv_path = tmp_path / "partial.csv"
     csv_path.write_text(
