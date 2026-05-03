@@ -321,6 +321,56 @@ def test_status_bar_reflects_progress_and_dirty(qapp):
     assert "●" in text  # dirty marker appears
 
 
+def test_csv_load_skips_blank_rows(qapp, tmp_path):
+    """Blank lines / empty path rows must not desync filelist from rowCount.
+    Otherwise the next _write_csv pairs filelist[i] against the wrong row's
+    rating cells."""
+    csv_path = tmp_path / "with_blanks.csv"
+    csv_path.write_text(
+        "File,QC_Raw,QC_Pre\n"
+        "/tmp/a.jpg,5,4\n"
+        "\n"
+        ",,\n"
+        "/tmp/c.jpg,3,2\n"
+    )
+
+    window = PyQC.MainWindow()
+    window.loadCSV(str(csv_path))
+
+    assert window.filelist == ["/tmp/a.jpg", "/tmp/c.jpg"]
+    assert window.tableWidget.rowCount() == 2
+    assert window.tableWidget.item(1, 1).text() == "3"
+    assert window.tableWidget.item(1, 2).text() == "2"
+
+    out = tmp_path / "out.csv"
+    window._write_csv(str(out))
+    assert out.read_text().splitlines() == [
+        "File,QC_Raw,QC_Pre",
+        "/tmp/a.jpg,5,4",
+        "/tmp/c.jpg,3,2",
+    ]
+
+
+def test_csv_load_resets_zoom_state_and_status(qapp, tmp_path):
+    """loadCSV must route through _go_to_row so the scroll/zoom state and
+    status bar are refreshed for the newly loaded dataset."""
+    csv_path = tmp_path / "in.csv"
+    csv_path.write_text("File,QC_Raw,QC_Pre\n/tmp/a.jpg,1,2\n/tmp/b.jpg,,\n")
+
+    window = PyQC.MainWindow()
+    # Simulate a leftover manual zoom before the load.
+    window.scrollArea.setWidgetResizable(False)
+    window._fit_mode = True
+    window.scaleFactor = 0.5
+
+    window.loadCSV(str(csv_path))
+
+    assert window.scrollArea.widgetResizable() is True
+    assert window._fit_mode is False
+    assert window.scaleFactor is None
+    assert window._status_label.text().startswith("2 / 2")
+
+
 def test_listlocation_lands_on_first_unrated(qapp, tmp_path):
     csv_path = tmp_path / "partial.csv"
     csv_path.write_text(

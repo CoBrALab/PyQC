@@ -341,6 +341,11 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             column_names = ["File", "QC_Raw", "QC_Pre"]
             data_rows = rows
 
+        # Drop blank lines and rows with no path so filelist length stays in
+        # sync with rowCount; otherwise _write_csv pairs filelist[i] with
+        # the rating cells of a different row.
+        data_rows = [r for r in data_rows if r and r[0]]
+
         if not data_rows:
             print("Warning: CSV file has no data rows.")
             return
@@ -357,8 +362,6 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         first_unrated_found = False
 
         for row_idx, rowdata in enumerate(data_rows):
-            if not rowdata:
-                continue
             file_path = rowdata[0]
             if not os.path.isabs(file_path):
                 file_path = os.path.normpath(os.path.join(csv_dir, file_path))
@@ -380,14 +383,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
                         break
 
         self.tableWidget.resizeColumnsToContents()
-
-        if self.filelist:
-            self.label.load(self.filelist[self.listlocation])
-            self.tableWidget.scrollToItem(
-                self.tableWidget.item(self.listlocation, 0),
-                QAbstractItemView.PositionAtCenter,
-            )
-            self.tableWidget.selectRow(self.listlocation)
+        self._go_to_row(self.listlocation)
 
     def openArgumentFiles(self, files):
         if not files:
