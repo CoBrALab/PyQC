@@ -47,11 +47,11 @@ from PyQt5.QtWidgets import (
 )
 
 import argparse
-import signal
-import sys
-import glob
 import csv
 import os
+import pathlib
+import signal
+import sys
 
 import window1
 
@@ -114,8 +114,23 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         elif event.key() == Qt.Key_Minus:  # type: ignore[attr-defined]
             self.scaleImage(0.9)
 
+    def _go_to_row(self, row):
+        """Move selection to `row`, load its image, reset zoom. No-op if
+        row is out of range or there are no files."""
+        if not self.filelist or row < 0 or row >= len(self.filelist):
+            return
+        self.listlocation = row
+        self.label.load(self.filelist[row])
+        self.scrollArea.setWidgetResizable(True)
+        self.scaleFactor = None
+        self.tableWidget.scrollToItem(
+            self.tableWidget.item(row, 0),
+            QAbstractItemView.PositionAtCenter,
+        )
+        self.tableWidget.selectRow(row)
+
     def numpress(self, key):
-        rating_columns = [i for i in range(1, self.tableWidget.columnCount())]
+        rating_columns = list(range(1, self.tableWidget.columnCount()))
         if not rating_columns:
             return
 
@@ -126,47 +141,21 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             self.listlocation, self.insert_column, QTableWidgetItem(key)
         )
 
-        current_idx = rating_columns.index(self.insert_column)
-        if current_idx == len(rating_columns) - 1:
+        idx = rating_columns.index(self.insert_column)
+        if idx == len(rating_columns) - 1:
             self.insert_column = rating_columns[0]
-            if (self.listlocation + 1) != len(self.filelist):
-                self.listlocation += 1
-                self.label.load(self.filelist[self.listlocation])
-                self.scrollArea.setWidgetResizable(True)
-                self.scaleFactor = None
-                self.tableWidget.scrollToItem(
-                    self.tableWidget.item(self.listlocation, 0),
-                    QAbstractItemView.PositionAtCenter,
-                )
-                self.tableWidget.selectRow(self.listlocation)
+            if self.listlocation + 1 < len(self.filelist):
+                self._go_to_row(self.listlocation + 1)
         else:
-            self.insert_column = rating_columns[current_idx + 1]
+            self.insert_column = rating_columns[idx + 1]
 
     def navup(self):
         self.insert_column = 1
-        if not ((self.listlocation - 1) < 0):
-            self.listlocation -= 1
-            self.label.load(self.filelist[self.listlocation])
-            self.scrollArea.setWidgetResizable(True)
-            self.scaleFactor = None
-            self.tableWidget.scrollToItem(
-                self.tableWidget.item(self.listlocation, 0),
-                QAbstractItemView.PositionAtCenter,
-            )
-            self.tableWidget.selectRow(self.listlocation)
+        self._go_to_row(self.listlocation - 1)
 
     def navdown(self):
         self.insert_column = 1
-        if (self.listlocation + 1) != len(self.filelist):
-            self.listlocation += 1
-            self.label.load(self.filelist[self.listlocation])
-            self.scrollArea.setWidgetResizable(True)
-            self.scaleFactor = None
-            self.tableWidget.scrollToItem(
-                self.tableWidget.item(self.listlocation, 0),
-                QAbstractItemView.PositionAtCenter,
-            )
-            self.tableWidget.selectRow(self.listlocation)
+        self._go_to_row(self.listlocation + 1)
 
     def scaleImage(self, factor):
         if not self.label.content or self.label.content.size().width() == 0:
@@ -246,13 +235,15 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         if directory:
             self.loadDirectory(directory)
 
+    IMAGE_EXTS = (".jpg", ".jpeg", ".png", ".gif", ".webp")
+
     def loadDirectory(self, directory):
-        """Load images from a directory."""
-        files = glob.glob(directory + "/*.jpg")
-        files.extend(glob.glob(directory + "/*.png"))
-        files.extend(glob.glob(directory + "/*.gif"))
-        files.extend(glob.glob(directory + "/*.webp"))
-        files.extend(glob.glob(directory + "/*.jpeg"))
+        """Load images from a directory, sorted, case-insensitive on suffix."""
+        files = sorted(
+            str(p)
+            for p in pathlib.Path(directory).iterdir()
+            if p.is_file() and p.suffix.lower() in self.IMAGE_EXTS
+        )
 
         if not files:
             print("Warning: No image files found.")
@@ -360,44 +351,22 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         for i, path in enumerate(self.filelist):
             display = os.path.splitext(os.path.basename(path))[0]
             self.tableWidget.setItem(i, 0, QTableWidgetItem(display))
-        self.label.load(self.filelist[self.listlocation])
-        self.tableWidget.scrollToItem(
-            self.tableWidget.item(self.listlocation, 0),
-            QAbstractItemView.PositionAtCenter,
-        )
-        self.tableWidget.selectRow(self.listlocation)
+        self._go_to_row(self.listlocation)
 
     def switchToItem(self, row, column):
-        self.listlocation = row
-        self.label.load(self.filelist[self.listlocation])
-        self.scrollArea.setWidgetResizable(True)
-        self.scaleFactor = None
-        rating_columns = [i for i in range(1, self.tableWidget.columnCount())]
+        rating_columns = list(range(1, self.tableWidget.columnCount()))
         if column in rating_columns:
             self.insert_column = column
         elif rating_columns:
             self.insert_column = rating_columns[0]
-        self.tableWidget.scrollToItem(
-            self.tableWidget.item(self.listlocation, self.insert_column),
-            QAbstractItemView.PositionAtCenter,
-        )
-        self.tableWidget.selectRow(self.listlocation)
+        self._go_to_row(row)
 
     def undo(self):
         self.insert_column = 1
-        if self.listlocation > 0:
-            self.listlocation -= 1
-        rating_columns = [i for i in range(1, self.tableWidget.columnCount())]
-        for col in rating_columns:
-            self.tableWidget.setItem(self.listlocation, col, QTableWidgetItem(""))
-        self.label.load(self.filelist[self.listlocation])
-        self.scrollArea.setWidgetResizable(True)
-        self.scaleFactor = None
-        self.tableWidget.scrollToItem(
-            self.tableWidget.item(self.listlocation, 1),
-            QAbstractItemView.PositionAtCenter,
-        )
-        self.tableWidget.selectRow(self.listlocation)
+        target_row = max(0, self.listlocation - 1)
+        for col in range(1, self.tableWidget.columnCount()):
+            self.tableWidget.setItem(target_row, col, QTableWidgetItem(""))
+        self._go_to_row(target_row)
 
     def _write_csv(self, path):
         """Write column_names as the header row, then [path, rating1, ...]."""

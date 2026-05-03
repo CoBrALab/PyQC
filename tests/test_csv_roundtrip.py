@@ -169,6 +169,20 @@ def test_remove_column_at_targets_specific_column(qapp):
     assert window.tableWidget.columnCount() == 3
 
 
+def test_loadDirectory_picks_up_mixed_case_extensions_sorted(qapp, tmp_path):
+    """B9: case-insensitive suffix match, sorted output, ignores non-images."""
+    for name in ["b.JPG", "a.png", "c.JPEG", "z.GIF", "ignore.txt", "x.WEBP"]:
+        (tmp_path / name).write_bytes(b"")
+
+    window = PyQC.MainWindow()
+    window.loadDirectory(str(tmp_path))
+
+    names = [PyQC.os.path.basename(p) for p in window.filelist]
+    assert names == sorted(["b.JPG", "a.png", "c.JPEG", "z.GIF", "x.WEBP"])
+    assert window.tableWidget.rowCount() == 5
+    assert window.tableWidget.item(0, 0).text() == "a"
+
+
 def test_listlocation_lands_on_first_unrated(qapp, tmp_path):
     csv_path = tmp_path / "partial.csv"
     csv_path.write_text(
