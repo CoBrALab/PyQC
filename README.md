@@ -54,38 +54,12 @@ View Control Settings
 
 ## Development notes
 
-### To re-generate GUI:
+### To re-generate the GUI:
 
-First, use `pyuic5` to automatically generate the python code from the user interface `.ui` file:
+`window1.ui` promotes the image label to `SaneDefaultsImageLabel`, so
+`pyuic5` generates a working `window1.py` with no manual edits:
 
-``pyuic5 window1.ui -o window1.py``
-
-Then, modify window1.py as follows:
-
-- import from `image_widgets.py`:
-
-```python
-# Add the following:
-from image_widget import *
-```
-
-- Switch from `QtWidgets.QLabel` to `SaneDefaultsImageLabel`:
-
-```python
-# Replace (around line 90):
-self.label = QtWidgets.QLabel(self.scrollAreaWidgetContents)
-
-# with
-self.label = SaneDefaultsImageLabel()
-```
-
-- Switch from `scrollAreaWidgetContents` to `label`:
-
-```python
-# Replace (around line 100):
-self.scrollArea.setWidget(self.scrollAreaWidgetContents)
-
-# with
-self.scrollArea.setWidget(self.label)
+```bash
+pyuic5 window1.ui -o window1.py
 ```
 

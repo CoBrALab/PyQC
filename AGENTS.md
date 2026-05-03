@@ -16,16 +16,19 @@ uv run pyqc <files>  # Run the app
 
 ## Codegen Workflow
 
-When modifying `window1.ui`:
+`window1.ui` promotes the image label to `SaneDefaultsImageLabel` and
+puts it directly inside the `QScrollArea`, so `pyuic5` produces
+working code without any manual post-edits:
 
 ```bash
 pyuic5 window1.ui -o window1.py
+# or, without pyuic5 on $PATH:
+uv run python -m PyQt5.uic.pyuic window1.ui -o window1.py
 ```
 
-Then apply these modifications to `window1.py`:
-1. Add `from image_widget import *`
-2. Replace `QtWidgets.QLabel` with `SaneDefaultsImageLabel`
-3. Replace `self.scrollArea.setWidget(self.scrollAreaWidgetContents)` with `self.scrollArea.setWidget(self.label)`
+If you ever need to re-add a wrapper widget or replace the promoted
+label, edit `window1.ui` in Qt Designer rather than patching the
+generated `window1.py` by hand.
 
 ## Key Files
 

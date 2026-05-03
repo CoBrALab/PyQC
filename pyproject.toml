@@ -24,7 +24,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.ruff.lint.per-file-ignores]
-# window1.py is auto-generated from window1.ui via pyuic5 and then patched
-# by hand per AGENTS.md to swap in SaneDefaultsImageLabel. The star-import
-# is part of that patch.
-"window1.py" = ["F403", "F405"]
+# window1.py is auto-generated from window1.ui via pyuic5. pyuic5 always
+# emits all three Qt submodule imports even when one is unused (F401),
+# and emits the custom-widget import at the bottom of the file (E402).
+"window1.py" = ["E402", "F401"]
