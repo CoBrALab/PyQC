@@ -56,7 +56,7 @@ Load data via the command line or use the GUI menu options:
 | 0-9 | Assign rating (alternates between QC_Raw and QC_Pre) |
 | W or / | Navigate up without rating |
 | S or * | Navigate down without rating |
-| . | Undo - go back and clear previous ratings |
+| . | Undo - clear the most recently entered rating cell |
 | +/- | Zoom in/out |
 | Mouse wheel | Zoom in/out |
 

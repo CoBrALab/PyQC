@@ -169,6 +169,68 @@ def test_remove_column_at_targets_specific_column(qapp):
     assert window.tableWidget.columnCount() == 3
 
 
+def test_undo_steps_back_within_a_row(qapp):
+    """B11: undo on the second rating column clears that column on the
+    same row, doesn't touch the prior row."""
+    window = PyQC.MainWindow()
+    _populate(
+        window,
+        ["/tmp/a.png", "/tmp/b.png"],
+        ["File", "QC_Raw", "QC_Pre"],
+        [("5", "4"), ("3", "2")],
+    )
+    window.listlocation = 1
+    window.insert_column = 2  # at QC_Pre, having entered QC_Raw=3
+
+    window.undo()
+
+    assert window.tableWidget.item(1, 1).text() == ""
+    assert window.tableWidget.item(1, 2).text() == "2"  # untouched
+    assert window.tableWidget.item(0, 1).text() == "5"  # prior row intact
+    assert window.tableWidget.item(0, 2).text() == "4"
+    assert window.insert_column == 1
+    assert window.listlocation == 1
+
+
+def test_undo_at_first_column_steps_back_a_row(qapp):
+    """B11: undo on the first rating column clears the LAST column of
+    the previous row and lands the cursor there."""
+    window = PyQC.MainWindow()
+    _populate(
+        window,
+        ["/tmp/a.png", "/tmp/b.png"],
+        ["File", "QC_Raw", "QC_Pre"],
+        [("5", "4"), ("", "")],
+    )
+    window.listlocation = 1
+    window.insert_column = 1
+
+    window.undo()
+
+    assert window.tableWidget.item(0, 1).text() == "5"  # not wiped
+    assert window.tableWidget.item(0, 2).text() == ""   # cleared
+    assert window.listlocation == 0
+    assert window.insert_column == 2
+
+
+def test_undo_noop_at_origin(qapp):
+    window = PyQC.MainWindow()
+    _populate(
+        window,
+        ["/tmp/a.png"],
+        ["File", "QC_Raw", "QC_Pre"],
+        [("", "")],
+    )
+    window.listlocation = 0
+    window.insert_column = 1
+
+    window.undo()
+
+    assert window.tableWidget.item(0, 1).text() == ""
+    assert window.listlocation == 0
+    assert window.insert_column == 1
+
+
 def test_loadDirectory_picks_up_mixed_case_extensions_sorted(qapp, tmp_path):
     """B9: case-insensitive suffix match, sorted output, ignores non-images."""
     for name in ["b.JPG", "a.png", "c.JPEG", "z.GIF", "ignore.txt", "x.WEBP"]:

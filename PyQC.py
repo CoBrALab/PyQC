@@ -80,6 +80,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self.image = None
         self.listlocation = 0
         self.scaleFactor = None
+        self._fit_mode = False
         self.insert_column = 1
         self.column_names = ["File", "QC_Raw", "QC_Pre"]
 
@@ -123,6 +124,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self.label.load(self.filelist[row])
         self.scrollArea.setWidgetResizable(True)
         self.scaleFactor = None
+        self._fit_mode = False
         self.tableWidget.scrollToItem(
             self.tableWidget.item(row, 0),
             QAbstractItemView.PositionAtCenter,
@@ -166,6 +168,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
                 self.label.size().width() / self.label.content.size().width()
             )
         self.scaleFactor *= factor
+        self._fit_mode = False
         self.scrollArea.setWidgetResizable(False)
         self.label.resize(self.scaleFactor * self.label.content.size())
         self.adjustScrollBar(self.scrollArea.horizontalScrollBar(), factor)
@@ -179,6 +182,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
     def zoomTo1_1(self):
         if not self.label.content or self.label.content.size().width() == 0:
             return
+        self._fit_mode = False
         self.scrollArea.setWidgetResizable(False)
         self.scaleFactor = 1.0
         self.label.resize(self.label.content.size())
@@ -191,6 +195,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         scale_width = viewport_size.width() / content_size.width()
         scale_height = viewport_size.height() / content_size.height()
         self.scaleFactor = min(scale_width, scale_height)
+        self._fit_mode = True
         self.scrollArea.setWidgetResizable(False)
         self.label.resize(self.scaleFactor * content_size)
 
@@ -212,8 +217,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
     def resizeEvent(self, a0: QResizeEvent | None) -> None:
         if a0 is None:
             return
-        event = a0
-        if self.scaleFactor and not self.scrollArea.widgetResizable():
+        if self._fit_mode:
             self.zoomToFit()
 
     def _reset_table(self):
@@ -228,6 +232,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self.filelist = []
         self.listlocation = 0
         self.scaleFactor = None
+        self._fit_mode = False
         self.insert_column = 1
 
     def openDir(self):
@@ -362,11 +367,31 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self._go_to_row(row)
 
     def undo(self):
-        self.insert_column = 1
-        target_row = max(0, self.listlocation - 1)
-        for col in range(1, self.tableWidget.columnCount()):
-            self.tableWidget.setItem(target_row, col, QTableWidgetItem(""))
-        self._go_to_row(target_row)
+        """Clear the most recently entered rating cell.
+
+        On the first rating column, this means stepping back a row to its
+        last rating column; otherwise it stays on the current row and steps
+        insert_column one slot to the left. No-op at the very first cell.
+        """
+        rating_columns = list(range(1, self.tableWidget.columnCount()))
+        if not rating_columns:
+            return
+        if self.insert_column not in rating_columns:
+            self.insert_column = rating_columns[0]
+
+        idx = rating_columns.index(self.insert_column)
+        if idx > 0:
+            prev_col = rating_columns[idx - 1]
+            self.tableWidget.setItem(
+                self.listlocation, prev_col, QTableWidgetItem("")
+            )
+            self.insert_column = prev_col
+        elif self.listlocation > 0:
+            target_row = self.listlocation - 1
+            last_col = rating_columns[-1]
+            self.tableWidget.setItem(target_row, last_col, QTableWidgetItem(""))
+            self.insert_column = last_col
+            self._go_to_row(target_row)
 
     def _write_csv(self, path):
         """Write column_names as the header row, then [path, rating1, ...]."""
@@ -514,7 +539,7 @@ Keyboard Shortcuts:
   0-9    Assign rating to current image (alternates between QC_Raw and QC_Pre)
   W / /  Navigate up without rating
   S / *  Navigate down without rating
-  .      Undo - go back and clear previous image's ratings
+  .      Undo - clear the most recently entered rating cell
   +/-    Zoom in/out
 
 Examples:
