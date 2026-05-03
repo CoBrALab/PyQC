@@ -32,18 +32,6 @@ uv run pyqc --csv ratings.csv
 
 ## Usage
 
-Load data via either the command line or the open files
-open directory function.
-
-Use the numeric keys on the keybord to assign that score
-to current image.
-
-Use `w` and `s` or `/` and `*` to navigatge up and down the list without
-assigning a rating. Use `.` to undo previous rating.
-`+` and `-` control image zoom.
-
-## Usage
-
 Load data via the command line or use the GUI menu options:
 - **Open Directory**: Load all images from a folder
 - **Open Files**: Select specific image files

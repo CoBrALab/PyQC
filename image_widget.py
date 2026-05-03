@@ -16,14 +16,6 @@ Note from HeleleMama:
 
 """
 
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    with_statement,
-    unicode_literals,
-)
-
 __author__ = "Stephan Sokolow (deitarion/SSokolow); HeleleMama"
 __license__ = "MIT"
 
@@ -38,21 +30,25 @@ class SaneQMovie(QMovie):
     def __init__(self, *args, **kwargs):
         super(SaneQMovie, self).__init__(*args, **kwargs)
         self.jumpToFrame(0)
-        # Save the original aspect for later use
         self.orig_size = self.currentImage().size()
-        self.aspect = self.orig_size.width() / self.orig_size.height()
+        if self.orig_size.width() > 0 and self.orig_size.height() > 0:
+            self.aspect = self.orig_size.width() / self.orig_size.height()
+        else:
+            self.aspect = 1.0
 
     def adaptScale(self, size):
         """Manually implement aspect-preserving scaling for QMovie"""
         # Thanks to Spencer @ https://stackoverflow.com/a/50166220/435253
         # for figuring out that this approach must be taken to get smooth
         # up-scaling out of QMovie.
+        if size.width() <= 0 or size.height() <= 0 or self.aspect <= 0:
+            return
         width = size.height() * self.aspect
         if width <= size.width():
-            n_size = QSize(width, size.height())
+            n_size = QSize(int(width), size.height())
         else:
             height = size.width() / self.aspect
-            n_size = QSize(size.width(), height)
+            n_size = QSize(size.width(), int(height))
         self.setScaledSize(n_size)
 
     def size(self):
@@ -128,7 +124,7 @@ class SaneDefaultsImageLabel(QLabel):
         # Set the letterbox/pillarbox bars to be transparent
         # https://wiki.qt.io/How_to_Change_the_Background_Color_of_QWidget
         pal = self.palette()
-        pal.setColor(QPalette.Background, Qt.transparent)
+        pal.setColor(QPalette.Window, Qt.transparent)
         self.setAutoFillBackground(True)
         self.setPalette(pal)
 
@@ -159,8 +155,15 @@ class SaneDefaultsImageLabel(QLabel):
             self.content.start()
 
         else:
-            # Set content as Image
-            self.content = SaneQPixmap(image_reader.read())
+            image = image_reader.read()
+            if image.isNull():
+                self.content = None
+                self.clear()
+                self.setText("Failed to load: {}\n{}".format(
+                    source, image_reader.errorString()
+                ))
+                return
+            self.content = SaneQPixmap(image)
             # Adjust the widget size
             if adaptSize:
                 self.setPixmap(self.content.adaptScale(size))

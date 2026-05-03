@@ -1,20 +1,7 @@
 #!/usr/bin/env python3
 
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    with_statement,
-    unicode_literals,
-)
-
-from PyQt5.QtCore import QSize, Qt, QEvent
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import (
-    QFont,
-    QPalette,
-    QPixmap,
-    QImage,
-    QMovie,
     QKeyEvent,
     QWheelEvent,
     QResizeEvent,
@@ -22,28 +9,14 @@ from PyQt5.QtGui import (
 from PyQt5.QtWidgets import (
     QApplication,
     QMainWindow,
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QGridLayout,
-    QLabel,
-    QPushButton,
-    QLineEdit,
-    QTextEdit,
-    QTableWidget,
     QTableWidgetItem,
     QHeaderView,
-    QScrollArea,
-    QSplitter,
     QFileDialog,
     QInputDialog,
     QMessageBox,
     QMenu,
-    QMenuBar,
-    QStatusBar,
     QAbstractItemView,
     QDialog,
-    QAction,
 )
 
 import argparse
@@ -102,7 +75,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         if a0 is None:
             return
         event = a0
-        if event.text().isnumeric():
+        if event.text() in "0123456789":
             self.numpress(event.text())
         elif event.key() == Qt.Key_Period:  # type: ignore[attr-defined]
             self.undo()
@@ -463,6 +436,11 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             if not new_name:
                 return
             if new_name in self.column_names:
+                QMessageBox.warning(
+                    self,
+                    "Duplicate Column",
+                    f"A column named '{new_name}' already exists.",
+                )
                 return
 
             self.column_names.append(new_name)
@@ -479,7 +457,6 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
                 )
 
             self.tableWidget.resizeColumnsToContents()
-            self.tableWidget.setHorizontalHeaderLabels(self.column_names)
 
     def renameColumn(self):
         self._rename_column_at(self.tableWidget.currentColumn())
@@ -524,6 +501,10 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         if reply == QMessageBox.Yes:
             self.column_names.pop(column)
             self.tableWidget.removeColumn(column)
+
+            rating_columns = list(range(1, self.tableWidget.columnCount()))
+            if rating_columns and self.insert_column not in rating_columns:
+                self.insert_column = rating_columns[0]
 
             if self.tableWidget.columnCount() > 0:
                 self.tableWidget.setHorizontalHeaderLabels(self.column_names)
