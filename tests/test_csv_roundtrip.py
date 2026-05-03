@@ -305,6 +305,22 @@ def test_dirty_flag_cleared_on_load(qapp, tmp_path):
     assert window._dirty is False
 
 
+def test_status_bar_reflects_progress_and_dirty(qapp):
+    """L4: status label tracks index, unrated count, and dirty marker."""
+    window = PyQC.MainWindow()
+    assert window._status_label.text() == "No files loaded"
+
+    window.openArgumentFiles(["/tmp/a.png", "/tmp/b.png", "/tmp/c.png"])
+    text = window._status_label.text()
+    assert text.startswith("1 / 3")
+    assert "3 unrated" in text
+    assert "●" not in text  # nothing dirty yet
+
+    window.numpress("5")
+    text = window._status_label.text()
+    assert "●" in text  # dirty marker appears
+
+
 def test_listlocation_lands_on_first_unrated(qapp, tmp_path):
     csv_path = tmp_path / "partial.csv"
     csv_path.write_text(

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import (
     QKeyEvent,
     QWheelEvent,
@@ -9,6 +9,7 @@ from PyQt5.QtGui import (
 from PyQt5.QtWidgets import (
     QApplication,
     QMainWindow,
+    QLabel,
     QTableWidgetItem,
     QHeaderView,
     QFileDialog,
@@ -58,6 +59,10 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self.column_names = ["File", "QC_Raw", "QC_Pre"]
         self._dirty = False
 
+        self._status_label = QLabel()
+        self.statusBar().addPermanentWidget(self._status_label)
+        self._refresh_status()
+
         self.tableWidget.cellClicked.connect(self.switchToItem)
         self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.tableWidget.customContextMenuRequested.connect(self.showColumnContextMenu)
@@ -104,6 +109,34 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             QAbstractItemView.PositionAtCenter,
         )
         self.tableWidget.selectRow(row)
+        self._refresh_status()
+
+    def _count_unrated_rows(self):
+        count = 0
+        for r in range(self.tableWidget.rowCount()):
+            for c in range(1, self.tableWidget.columnCount()):
+                item = self.tableWidget.item(r, c)
+                if item is None or item.text() == "":
+                    count += 1
+                    break
+        return count
+
+    def _refresh_status(self):
+        if not self.filelist:
+            text = "No files loaded"
+        else:
+            text = f"{self.listlocation + 1} / {len(self.filelist)}"
+            unrated = self._count_unrated_rows()
+            if unrated:
+                text += f"   {unrated} unrated"
+            if self._dirty:
+                text += "   ●"
+        self._status_label.setText(text)
+
+    def _toast(self, message, ms=3000):
+        bar = self.statusBar()
+        if bar is not None:
+            bar.showMessage(message, ms)
 
     def numpress(self, key):
         rating_columns = list(range(1, self.tableWidget.columnCount()))
@@ -125,6 +158,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
                 self._go_to_row(self.listlocation + 1)
         else:
             self.insert_column = rating_columns[idx + 1]
+        self._refresh_status()
 
     def navup(self):
         self.insert_column = 1
@@ -210,6 +244,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
         self._fit_mode = False
         self.insert_column = 1
         self._dirty = False
+        self._refresh_status()
 
     def _confirm_discard_changes(self):
         """Prompt to save unsaved ratings. Returns True if the caller may
@@ -399,6 +434,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             )
             self.insert_column = prev_col
             self._dirty = True
+            self._refresh_status()
         elif self.listlocation > 0:
             target_row = self.listlocation - 1
             last_col = rating_columns[-1]
@@ -421,6 +457,8 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
                     rowdata.append(item.text() if item is not None else "")
                 writer.writerow(rowdata)
         self._dirty = False
+        self._toast(f"Saved {os.path.basename(path)}")
+        self._refresh_status()
 
     def SaveAs(self):
         path, _ = QFileDialog.getSaveFileName(self, "Save File", "", "CSV(*.csv)")
@@ -500,6 +538,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
 
             self._dirty = True
             self.tableWidget.resizeColumnsToContents()
+            self._refresh_status()
 
     def renameColumn(self):
         self._rename_column_at(self.tableWidget.currentColumn())
@@ -526,6 +565,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
                 header_item.setText(new_name)
             self._dirty = True
             self.tableWidget.resizeColumnsToContents()
+            self._refresh_status()
 
     def removeColumn(self):
         self._remove_column_at(self.tableWidget.currentColumn())
@@ -555,6 +595,7 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             if self.tableWidget.columnCount() > 0:
                 self.tableWidget.setHorizontalHeaderLabels(self.column_names)
                 self.tableWidget.resizeColumnsToContents()
+            self._refresh_status()
 
 
 def main():
@@ -600,8 +641,14 @@ Examples:
 
     app = QApplication(sys.argv)
 
-    # Handle Ctrl-C gracefully
+    # Handle Ctrl-C gracefully. The timer wakes the interpreter every
+    # 200ms so Python's signal handler can run between Qt events;
+    # without it the GUI sleeps and SIGINT only fires when the user
+    # interacts with the window.
     signal.signal(signal.SIGINT, signal.SIG_DFL)
+    sigint_timer = QTimer()
+    sigint_timer.start(200)
+    sigint_timer.timeout.connect(lambda: None)
 
     # Handle conflicting arguments
     if args.directory and args.csv:
