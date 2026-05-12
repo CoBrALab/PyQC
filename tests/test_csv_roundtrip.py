@@ -84,7 +84,7 @@ def test_csv_load_no_header_uses_defaults(qapp, tmp_path):
     window = PyQC.MainWindow()
     window.loadCSV(str(csv_path))
 
-    assert window.column_names == ["File", "QC_Raw", "QC_Pre"]
+    assert window.column_names == ["File", "Unknown_QC1", "Unknown_QC2"]
     assert window.filelist == ["/tmp/x.jpg", "/tmp/y.jpg"]
     assert window.tableWidget.item(0, 1).text() == "7"
     assert window.tableWidget.item(1, 2).text() == "1"
@@ -369,6 +369,23 @@ def test_csv_load_resets_zoom_state_and_status(qapp, tmp_path):
     assert window._fit_mode is False
     assert window.scaleFactor is None
     assert window._status_label.text().startswith("2 / 2")
+
+
+def test_csv_load_no_header_4_columns(qapp, tmp_path):
+    csv_path = tmp_path / "no_header_4col.csv"
+    csv_path.write_text("/tmp/x.jpg,7,8,3\n/tmp/y.jpg,9,1,4\n")
+
+    window = PyQC.MainWindow()
+    window.loadCSV(str(csv_path))
+
+    assert window.column_names == ["File", "Unknown_QC1", "Unknown_QC2", "Unknown_QC3"]
+    assert window.tableWidget.columnCount() == 4
+    assert window.tableWidget.item(0, 1).text() == "7"
+    assert window.tableWidget.item(0, 2).text() == "8"
+    assert window.tableWidget.item(0, 3).text() == "3"
+    assert window.tableWidget.item(1, 1).text() == "9"
+    assert window.tableWidget.item(1, 2).text() == "1"
+    assert window.tableWidget.item(1, 3).text() == "4"
 
 
 def test_listlocation_lands_on_first_unrated(qapp, tmp_path):

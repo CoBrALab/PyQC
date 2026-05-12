@@ -338,7 +338,8 @@ class MainWindow(QMainWindow, window1.Ui_MainWindow):
             column_names = [c for c in rows[0] if c]
             data_rows = rows[1:]
         else:
-            column_names = ["File", "QC_Raw", "QC_Pre"]
+            n_cols = max(len(r) for r in rows) if rows else 3
+            column_names = ["File"] + [f"Unknown_QC{i}" for i in range(1, n_cols)]
             data_rows = rows
 
         # Drop blank lines and rows with no path so filelist length stays in
